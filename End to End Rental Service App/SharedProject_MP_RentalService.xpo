@@ -1,0 +1,5738 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : MPCarTable unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #MPCarTable
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #MPCarTable
+      FormRef             #MPRentalTable
+      TitleField1         #CarId
+      TitleField2         #Model
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      ReplacementKey      #CarIdx
+      Origin              #{9EB55AC1-C073-4981-A950-4B80DA60A5A0}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Brand
+        STRING
+        PROPERTIES
+          Name                #Brand
+          Table               #MPCarTable
+          Origin              #{1EAD385A-E0E1-46E8-B609-C9562E7A2153}
+          ExtendedDataType    #Brand
+        ENDPROPERTIES
+        
+      FIELD #CarGroupId
+        STRING
+        PROPERTIES
+          Name                #CarGroupId
+          Mandatory           #Yes
+          Table               #MPCarTable
+          Origin              #{388C025E-CE66-40AF-9280-D59C9E685786}
+          StringSize          #1000
+        ENDPROPERTIES
+        
+      FIELD #CarId
+        INT
+        PROPERTIES
+          Name                #CarId
+          Table               #MPCarTable
+          Origin              #{69F0CB7F-D3D7-4B29-A278-B69FADA559BE}
+          ExtendedDataType    #CarId
+        ENDPROPERTIES
+        
+      FIELD #ManufacturingYear
+        STRING
+        PROPERTIES
+          Name                #ManufacturingYear
+          Table               #MPCarTable
+          Origin              #{A13DEC24-7041-4878-BB8B-BFD3234F89F3}
+          ExtendedDataType    #ManufacturingYear
+        ENDPROPERTIES
+        
+      FIELD #Model
+        STRING
+        PROPERTIES
+          Name                #Model
+          Table               #MPCarTable
+          Origin              #{8C875F12-EED6-4D68-9340-305DE7C51AD8}
+          ExtendedDataType    #Model
+        ENDPROPERTIES
+        
+      FIELD #MPCarStatus
+        ENUM
+        PROPERTIES
+          Name                #MPCarStatus
+          Table               #MPCarTable
+          Origin              #{F32C015E-230E-4900-8E97-7BBBCCC6408C}
+          EnumType            #MPCarStatus
+        ENDPROPERTIES
+        
+      FIELD #PricePerDay
+        REAL
+        PROPERTIES
+          Name                #PricePerDay
+          Label               #Price per Day
+          Table               #MPCarTable
+          Origin              #{435ED560-C883-480D-A47C-25D4D717D6F2}
+          ExtendedDataType    #Price
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #CarId
+          #Brand
+          #Model
+          #ManufacturingYear
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoIdentification
+        PROPERTIES
+          Name                #AutoIdentification
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #CarId
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #CarIdx
+      PROPERTIES
+        Name                #CarIdx
+        AllowDuplicates     #No
+        AlternateKey        #Yes
+        Origin              #{961C0648-992F-421A-81B0-B2028B04F4F1}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #CarId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+      REFERENCE #MPCarGroups
+        PROPERTIES
+          Name                #MPCarGroups
+          Table               #MPCarGroups
+          UseDefaultRoleNames #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE PKFK
+          PROPERTIES
+            Field               #CarGroupId
+            RelatedField        #Id
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      SOURCE #Insured
+        #edit NoYes Insured(boolean set, NoYes value)
+        #{
+        #    MPRentalTable           buffRentalPositive, buffRentalNegative, buffRentalNew;
+        #    NoYes                   ret;
+        #    NoYesId                 positive = NoYes::Yes;
+        #    NoYesId                 negative = NoYes::No;
+        #    FormRun                 formRun;
+        #
+        #    if (!set)
+        #    {
+        #        select firstOnly InsuranceNew from buffRentalPositive
+        #            where buffRentalPositive.InsuranceNew == positive
+        #                && buffRentalPositive.CarId == this.CarId;
+        #
+        #        select firstOnly InsuranceNew from buffRentalNegative
+        #            where buffRentalNegative.InsuranceNew == negative
+        #                && buffRentalNegative.CarId == this.CarId;
+        #
+        #        if (buffRentalNegative.RecId)
+        #        {
+        #            ret = NoYes::No;
+        #        }
+        #
+        #        else if (buffRentalPositive.RecId)
+        #        {
+        #            ret = NoYes::Yes;
+        #        }
+        #
+        #        else
+        #        {
+        #            ret = NoYes::No;
+        #        }
+        #    }
+        #
+        #    else
+        #    {
+        #        /*
+        #        if (value)
+        #        {
+        #            while select forUpdate buffRentalPositive
+        #                where buffRentalPositive.CarId == this.CarId
+        #            {
+        #                ttsBegin;
+        #                buffRentalPositive.InsuranceNew = NoYes::Yes;
+        #                buffRentalPositive.update();
+        #                ttsCommit;
+        #            }
+        #        }
+        #
+        #        if (!value)
+        #        {
+        #            while select forUpdate buffRentalNegative
+        #                where buffRentalNegative.CarId == this.CarId
+        #            {
+        #                ttsBegin;
+        #                buffRentalNegative.InsuranceNew = NoYes::No;
+        #                buffRentalNegative.update();
+        #                ttsCommit;
+        #            }
+        #        }
+        #        */
+        #
+        #        /*
+        #        while select forUpdate buffRentalNew
+        #            where buffRentalNew.CarId == this.CarId
+        #        {
+        #                ttsBegin;
+        #                buffRentalNew.InsuranceNew = value;
+        #                buffRentalNew.update();
+        #                ttsCommit;
+        #        }
+        #        */
+        #
+        #        update_recordSet buffRentalNew
+        #            setting InsuranceNew = value
+        #            where buffRentalNew.CarId == this.CarId;
+        #
+        #        // update recordset
+        #
+        #        //refreshes the 2nd data source from cartable form
+        #        if (this.datasource())
+        #        {
+        #            formRun = this.dataSource()./*obtine referinta catre form data source pentru this*/formRun()/*obtin referinta formei de pe urma form data source*/;
+        #            formRun.dataSource(2).research(true);
+        #        }
+        #
+        #        ret = value;
+        #
+        #    }
+        #
+        #    return ret;
+        #
+        #}
+        #
+      ENDSOURCE
+      SOURCE #TotalNumberOfRentals
+        #display Integer TotalNumberOfRentals()
+        #{
+        #    Integer                 ret;
+        #    MPRentalTable           buffRental;
+        #
+        #    select count(CarId) from buffRental
+        #        where buffRental.CarId == this.CarId;
+        #
+        #    ret = buffRental.CarId;
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #CarIdLookup
+        #public client static void CarIdLookup(FormStringControl _ctrl,
+        #                                           str _filter)
+        #{
+        #
+        #    // Intantiantes a SysTableLookup object telling it which control activated the lookup, and
+        #    // what table should be displayed inside the lookup form.
+        #    SysTableLookup sysTableLookup = SysTableLookup::newParameters(tablenum(MPCarTable), _ctrl);
+        #
+        #    Query                   query = new Query(); // This query will be used by the lookup form.
+        #    QueryBuildDataSource    qbds;
+        #      // X++ language function.
+        #            /*
+        #            213,  // 321 = ymd
+        #            DateDay::Digits2,
+        #
+        #            DateSeparator::None, // separator1
+        #            DateMonth::Digits2,
+        #            DateSeparator::None, // separator2
+        #
+        #            DateYear::Digits4
+        #            */
+        #
+        #    ;
+        #
+        #    // The "addLookupField" method adds the the fields that will be shown inside the lookup's grid.
+        #    // The second, boolean parameter indicates that this field will be returned from the lookup when a
+        #    // record is selected. In this case, we'll return our DummyPK.
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, CarId), true);
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, Brand));
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, Model));
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, ManufacturingYear));
+        #
+        #
+        #    // Using our dummy table as a DataSource Table.
+        #    qbds = query.addDataSource(tablenum(MPCarTable));
+        #
+        #    // This is the key part, what we want to filter to be displayed in the grid.
+        #    qbds.addRange(fieldNum(MPCarTable, MPCarStatus)).value(enum2str(MPCarStatus::Available));
+        #    qbds.addRange(fieldnum(MPCarTable, ManufacturingYear)).value(_filter);
+        #
+        #    // Passes the query to the sysTableLookup.
+        #    sysTableLookup.parmQuery(query);
+        #
+        #    // Activates the lookup.
+        #    sysTableLookup.performFormLookup();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #find
+        #static MPCarTable find(CarId carId, boolean update = false)
+        #{
+        #    MPCarTable  carTable;
+        #
+        #    carTable.selectForUpdate(update);
+        #
+        #    if (carId)
+        #    {
+        #        select firstonly carTable
+        #            index hint CarIdx
+        #                where carTable.CarId == carId;
+        #    }
+        #
+        #    return carTable;
+        #}
+      ENDSOURCE
+      SOURCE #ManufacturingYearLookup
+        #public client static void ManufacturingYearLookup(FormStringControl _ctrl,
+        #                                           str _filter)
+        #{
+        #
+        #    // Intantiantes a SysTableLookup object telling it which control activated the lookup, and
+        #    // what table should be displayed inside the lookup form.
+        #    SysTableLookup sysTableLookup = SysTableLookup::newParameters(tablenum(MPCarTable), _ctrl);
+        #
+        #    Query query = new Query(); // This query will be used by the lookup form.
+        #    QueryBuildDataSource qbds;
+        #
+        #    ;
+        #
+        #    // The "addLookupField" method adds the the fields that will be shown inside the lookup's grid.
+        #    // The second, boolean parameter indicates that this field will be returned from the lookup when a
+        #    // record is selected. In this case, we'll return our DummyPK.
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, CarId));
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, Brand));
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, Model));
+        #    sysTableLookup.addLookupField(fieldnum(MPCarTable, ManufacturingYear), true);
+        #
+        #
+        #    // Using our dummy table as a DataSource Table.
+        #    qbds = query.addDataSource(tablenum(MPCarTable));
+        #
+        #    // This is the key part, what we want to filter to be displayed in the grid.
+        #    qbds.addRange(fieldnum(MPCarTable, ManufacturingYear)).value(_filter);
+        #
+        #    // Passes the query to the sysTableLookup.
+        #    sysTableLookup.parmQuery(query);
+        #
+        #    // Activates the lookup.
+        #    sysTableLookup.performFormLookup();
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : MPRentalTable unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #MPRentalTable
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #MPRentalTable
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      Origin              #{FBA4E4A9-353E-46AC-B3D4-04DF47D52801}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Amount
+        REAL
+        PROPERTIES
+          Name                #Amount
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Table               #MPRentalTable
+          Origin              #{441985E5-54AF-477E-9AEC-5AB84DD81CBB}
+          ExtendedDataType    #Price
+        ENDPROPERTIES
+        
+      FIELD #CarId
+        INT
+        PROPERTIES
+          Name                #CarId
+          Table               #MPRentalTable
+          Origin              #{17182D3E-81BD-454F-A028-FD6B37D1B3C8}
+        ENDPROPERTIES
+        
+      FIELD #CarPricePerDay
+        REAL
+        PROPERTIES
+          Name                #CarPricePerDay
+          Table               #MPRentalTable
+          Origin              #{71F890B8-5737-444F-94C5-94154DFC6F13}
+        ENDPROPERTIES
+        
+      FIELD #CustFirstName
+        STRING
+        PROPERTIES
+          Name                #CustFirstName
+          Table               #MPRentalTable
+          Origin              #{BF0FF6A1-A13D-4B27-B32D-2E204CE50447}
+          ExtendedDataType    #CustFirstName
+        ENDPROPERTIES
+        
+      FIELD #CustLastName
+        STRING
+        PROPERTIES
+          Name                #CustLastName
+          Table               #MPRentalTable
+          Origin              #{12338D84-E190-4D95-B86F-451093563045}
+          ExtendedDataType    #CustLastName
+        ENDPROPERTIES
+        
+      FIELD #FromDateNew
+        DATE
+        PROPERTIES
+          Name                #FromDateNew
+          Table               #MPRentalTable
+          Origin              #{E608F628-726A-453C-8C94-2F0F4ED3D047}
+          ExtendedDataType    #FromDate
+        ENDPROPERTIES
+        
+      FIELD #Insurance
+        STRING
+        PROPERTIES
+          Name                #Insurance
+          Table               #MPRentalTable
+          Origin              #{E3D92F81-033A-473A-BE03-0AF1FACE10AD}
+          ExtendedDataType    #Insurance
+        ENDPROPERTIES
+        
+      FIELD #InsuranceCombo
+        ENUM
+        PROPERTIES
+          Name                #InsuranceCombo
+          Table               #MPRentalTable
+          Origin              #{DD8CF55E-D658-41FB-A148-CB0C76EA17E5}
+          EnumType            #NoYesCombo
+        ENDPROPERTIES
+        
+      FIELD #InsuranceNew
+        ENUM
+        PROPERTIES
+          Name                #InsuranceNew
+          Table               #MPRentalTable
+          Origin              #{79108638-DA37-4060-8DCE-EDBA95C5B8C4}
+          ExtendedDataType    #NoYesId
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #Time
+        STRING
+        PROPERTIES
+          Name                #Time
+          Table               #MPRentalTable
+          Origin              #{9A1893D1-4FA9-4035-B69E-95E467FB3F93}
+          ExtendedDataType    #Time
+        ENDPROPERTIES
+        
+      FIELD #ToDateNew
+        DATE
+        PROPERTIES
+          Name                #ToDateNew
+          Table               #MPRentalTable
+          Origin              #{9E23F525-361A-4381-B010-45B039FA5522}
+          ExtendedDataType    #ToDate
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+    ENDGROUPS
+    
+    INDICES
+      #CarIdx
+      PROPERTIES
+        Name                #CarIdx
+        Origin              #{A11E777B-C4E3-457B-B1D5-DD7C86B6C932}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+      REFERENCE #MPCarTable
+        PROPERTIES
+          Name                #MPCarTable
+          Table               #MPCarTable
+          UseDefaultRoleNames #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE PKFK
+          PROPERTIES
+            Field               #CarId
+            RelatedField        #CarId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      SOURCE #calculateAmount
+        #private real calculateAmount(real PricePerDay, real Percentage)
+        #{
+        #    //MPCarTable          mPCarBuffer;
+        #    //MPSetup             setupBuffer;
+        #    int                 numberofdays;
+        #    real                amounttoinsert;
+        #
+        #    if (this.ToDateNew != dateNull())
+        #    {
+        #
+        #        //select PricePerDay from mPCarBuffer
+        #            //where mPCarBuffer.CarId == this.CarId;
+        #
+        #        numberofdays = this.numberOfDays();
+        #
+        #        /*        /
+        #        if (nextMth(this.FromDateNew) <= this.ToDateNew)
+        #        {
+        #            percentage = 0.20;
+        #        }
+        #
+        #        else if (numberofdays >= 14)
+        #        {
+        #            percentage = 0.15;
+        #        }
+        #
+        #        else if (numberofdays >= 7)
+        #        {
+        #            percentage = 0.10;
+        #        }
+        #
+        #        else if (numberofdays >= 3)
+        #        {
+        #            percentage = 0.05;
+        #        }
+        #        */
+        #
+        #        amounttoinsert = (numberofdays * PricePerDay) - (Percentage * numberofdays);
+        #    }
+        #
+        #    return amounttoinsert;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #calculateDiscountPercentage
+        #private real calculateDiscountPercentage()
+        #{
+        #    MPDiscountSetup         setupBuffer, setupBuffer2;
+        #    //MPDiscountGroupSetup    setupGroupBuffer;
+        #    MPCarTable              /*carBuffer,*/ carTable;
+        #    MPCarGroups             /*carGroupsBuffer,*/ carGroups;
+        #    //MPRentalTable           rentalBuffer;
+        #
+        #    //MPCarTable              carBuffer;
+        #    //MPCarGroups             carGroupsBuffer;
+        #    int                     numberOfDays;
+        #    real                    ret;
+        #
+        #    numberOfDays = this.numberOfDays();
+        #
+        #    /*
+        #    select maxOf(Percentage) from setupBuffer
+        #        where setupBuffer.NumberOfDays <= numberOfDays;
+        #    */
+        #
+        #    /*
+        #    select Id from setupGroupBuffer
+        #        where setupGroupBuffer.Id == setupBuffer.DiscountGroupId
+        #            join firstOnly NumberOfDays from setupBuffer
+        #                order by NumberOfDays desc
+        #                    where setupBuffer.NumberOfDays <= numberOfDays;
+        #    */
+        #
+        #    /*
+        #    select firstOnly CarId from carBuffer
+        #        order by setupBuffer.NumberOfDays desc
+        #            where carBuffer.CarId == this.CarId
+        #                join carGroupsBuffer
+        #                    where carGroupsBuffer.id == carBuffer.CarGroupId
+        #                        join setupGroupBuffer
+        #                            where setupGroupBuffer.Id == carGroupsBuffer.DiscountGroupId
+        #                                join NumberOfDays, Percentage from setupBuffer
+        #                                    where setupBuffer.DiscountGroupId == setupGroupBuffer.Id
+        #                                        && setupBuffer.NumberOfDays <= numberOfDays;
+        #    */
+        #
+        #    /*
+        #    select CarId, CarGroupId from carBuffer
+        #        where carBuffer.CarId == this.CarId;
+        #    */
+        #    MPCarTable::find(this.CarId);
+        #
+        #    /*
+        #    select DiscountGroupId from carGroupsBuffer
+        #        where carGroupsBuffer.Id == carBuffer.CarGroupId;
+        #    */
+        #
+        #    MPCarGroups::find(carTable.CarGroupId);
+        #
+        #    select firstOnly NumberOfDays, Percentage from setupBuffer
+        #        order by setupBuffer.NumberOfDays desc
+        #            where setupBuffer.DiscountGroupId == carGroups.DiscountGroupId
+        #                && setupBuffer.NumberOfDays <= numberOfDays;
+        #
+        #    /*
+        #    select firstOnly NumberOfDays from setupBuffer
+        #        order by NumberOfDays desc
+        #            where setupBuffer.NumberOfDays <= numberOfDays;
+        #    */
+        #
+        #
+        #
+        #    select minOf(NumberOfDays) from setupBuffer2;
+        #
+        #    if (numberOfDays < setupBuffer2.NumberOfDays)
+        #    {
+        #        ret = 0;
+        #    }
+        #
+        #    else
+        #    {
+        #        ret = setupBuffer.Percentage;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #initFromCarTable
+        #private void initFromCarTable()
+        #{
+        #    MPCarTable          carTableBuffer;
+        #
+        #    select PricePerDay from carTableBuffer
+        #        where carTableBuffer.CarId == this.CarId;
+        #
+        #    this.CarPricePerDay = carTableBuffer.PricePerDay; //save the priceperday which was used when creating a new rental
+        #
+        #    this.Amount = this.calculateAmount(carTableBuffer.PricePerDay, this.calculateDiscountPercentage()); //send PricePerDay to calculateAmount
+        #}
+      ENDSOURCE
+      SOURCE #initValue
+        #public void initValue()
+        #{
+        #    this.FromDateNew = today();
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    //this.Amount = this.calculateAmount();
+        #    this.initFromCarTable();
+        #
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(FieldId _fieldId)
+        #{
+        #    /*
+        #    MPRentalTable rentalRecord1;
+        #    MPRentalTable rentalRecord2;
+        #    */
+        #
+        #    super(_fieldId);
+        #    //info(strfmt("Field number %1 changed from %2 to %3",_fieldId,this.orig().(_fieldId),this.(_fieldId)));
+        #
+        #    /*
+        #
+        #    if (fieldNum(MPRentalTable, CarId) == _fieldId)
+        #    {
+        #        if (this.FromDateNew < today() && this.ToDateNew > today())
+        #        {
+        #            rentalRecord1 = this;
+        #            ttsBegin;
+        #            buf2Buf(rentalRecord1, rentalRecord2);
+        #            rentalRecord2.FromDateNew = today();
+        #            if (!rentalRecord2.validateWrite())
+        #            {
+        #                throw Exception::Error;
+        #            }
+        #            rentalRecord2.insert();
+        #            ttsCommit;
+        #
+        #            ttsBegin;
+        #            select forupdate rentalRecord1;
+        #            rentalRecord1.CarId = this.orig().(_fieldId);
+        #            rentalRecord1.ToDateNew = today();
+        #            this.update();
+        #            ttsCommit;
+        #        }
+        #    }
+        #
+        #    */
+        #
+        #    // what happens with Amount field?
+        #    // first debug amount field
+        #
+        #
+        #
+        #    /*
+        #    MainAccount mainAccount1;
+        #    MainAccount mainAccount2;
+        #    mainAccount1 = MainAccount::findByMainAccountId('211100');
+        #    ttsBegin;
+        #    mainAccount2.data(mainAccount1);
+        #    mainAccount2.MainAccountId = '211101';
+        #    if (!mainAccount2.validateWrite())
+        #    {
+        #        throw Exception::Error;
+        #    }
+        #    mainAccount2.insert();
+        #    ttsCommit;
+        #    */
+        #}
+      ENDSOURCE
+      SOURCE #numberOfDays
+        #private int numberOfDays()
+        #{
+        #    int     numberOfDays;
+        #
+        #    numberOfDays = this.ToDateNew - this.FromDateNew;
+        #
+        #    return numberOfDays;
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    MPRentalTable       copy;
+        #    boolean             conditionarecod;
+        #    ;
+        #
+        #    this.Amount = this.calculateAmount(this.CarPricePerDay, this.calculateDiscountPercentage());
+        #
+        #    /*
+        #    select CarId from buffer
+        #        where buffer.RecId == this.RecId;
+        #    */
+        #
+        #    if (this.CarId != this.orig().CarId)
+        #    {
+        #        if (this.FromDateNew < today() && this.ToDateNew > today())
+        #        {
+        #            conditionarecod = true;
+        #            buf2Buf(this, copy);
+        #            this.CarId = this.orig().(fieldNum(MPRentalTable, CarId));
+        #            // this.CarId = this.orig().CarId;
+        #            this.ToDateNew = today();
+        #            /*
+        #            if (!this.validateWrite())
+        #            {
+        #                throw Exception::Error;
+        #            }
+        #            */
+        #            //this.update();
+        #        }
+        #    }
+        #
+        #    ttsBegin;
+        #
+        #    super();
+        #
+        #    if (conditionarecod)
+        #    {
+        #        copy.FromDateNew = today()+1;
+        #        if (!copy.validateWrite())
+        #        {
+        #            throw Exception::Error;
+        #        }
+        #        copy.insert();
+        #    }
+        #
+        #    ttsCommit;
+        #
+        #    if (this.datasource())
+        #    {
+        #        this.dataSource().research(true);
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean         ret;
+        #    MPRentalTable   buffMPRental;
+        #    dateDDMMYYYY    a,b,c,d;
+        #
+        #    ret = super();
+        #    a = this.FromDateNew;
+        #    b = this.ToDateNew;
+        #
+        #    select buffMPRental
+        #        where buffMPRental.CarId == this.CarId
+        #            && buffMPRental.RecId != this.RecId
+        #            && buffMPRental.ToDateNew >= this.FromDateNew
+        #            && buffMPRental.FromDateNew <= this.ToDateNew;
+        #
+        #    if (buffMPRental)
+        #    {
+        #        ret = checkFailed("There can't be two cars rented at the same time");
+        #    }
+        #
+        #    /*
+        #    while select buffMPRental
+        #    where buffMPRental.CarId == this.CarId
+        #        && buffMPRental.RecId != this.RecId
+        #    {
+        #        c = buffMPRental.FromDateNew;
+        #        d = buffMPRental.ToDateNew;
+        #
+        #        /*
+        #        if (a <= c && b <= d && c <= b)
+        #        {
+        #            ret = checkFailed("There can't be two cars rented at the same time");
+        #            break;
+        #        }
+        #
+        #        else if (c <= a && b <= d && a <= b)
+        #        {
+        #            ret = checkFailed("There can't be two cars rented at the same time");
+        #            break;
+        #        }
+        #
+        #        else if (c <= a && d <= b && a <= d)
+        #        {
+        #            ret = checkFailed("There can't be two cars rented at the same time");
+        #            break;
+        #        }
+        #
+        #        else if (a <= c && d <= b && c <= d)
+        #        {
+        #            ret = checkFailed("There can't be two cars rented at the same time");
+        #            break;
+        #        }
+        #        */
+        #
+        #        if (a <= d && b >= c)
+        #        {
+        #            ret = checkFailed("There can't be two cars rented at the same time");
+        #            break;
+        #        }
+        #    }
+        #    */
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : MPCarGroups unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #MPCarGroups
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #MPCarGroups
+      TitleField2         #Description
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      Origin              #{F6D15FFC-3487-4335-92B7-3580BE85230F}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Name                #Description
+          Table               #MPCarGroups
+          Origin              #{EB43B52E-9E21-408F-BEB0-5FC04C69B6C4}
+          ExtendedDataType    #CarGroupDescription
+          StringSize          #100
+        ENDPROPERTIES
+        
+      FIELD #DiscountGroupId
+        STRING
+        PROPERTIES
+          Name                #DiscountGroupId
+          Table               #MPCarGroups
+          Origin              #{CC9AF866-6699-44C1-B5C3-72067E57AF89}
+          ExtendedDataType    #DiscountGroupId
+          StringSize          #100
+        ENDPROPERTIES
+        
+      FIELD #Id
+        STRING
+        PROPERTIES
+          Name                #Id
+          Table               #MPCarGroups
+          Origin              #{7B0EC844-B07D-4880-BB47-99889587A723}
+          ExtendedDataType    #Id
+          StringSize          #100
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+    ENDGROUPS
+    
+    INDICES
+      #Idx
+      PROPERTIES
+        Name                #Idx
+        AllowDuplicates     #No
+        AlternateKey        #Yes
+        Origin              #{6ED11C14-066A-40BF-8F86-EF7C44EF168C}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Id
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+      REFERENCE #MPDiscountGroupSetup
+        PROPERTIES
+          Name                #MPDiscountGroupSetup
+          Table               #MPDiscountGroupSetup
+          UseDefaultRoleNames #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE PKFK
+          PROPERTIES
+            Field               #DiscountGroupId
+            RelatedField        #Id
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      SOURCE #find
+        #static MPCarGroups find(Id id, boolean update = false)
+        #{
+        #    MPCarGroups  carGroups;
+        #
+        #    carGroups.selectForUpdate(update);
+        #
+        #    if (id)
+        #    {
+        #        select firstonly carGroups
+        #            index hint Idx
+        #                where carGroups.Id == id;
+        #    }
+        #
+        #    return carGroups;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : MPDiscountGroupSetup unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #MPDiscountGroupSetup
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #MPDiscountGroupSetup
+      TitleField1         #Id
+      TitleField2         #Name
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      ReplacementKey      #Idx
+      Origin              #{64A2C19E-64A3-4DE0-A089-E3C2165D62A9}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Id
+        STRING
+        PROPERTIES
+          Name                #Id
+          Table               #MPDiscountGroupSetup
+          Origin              #{594606F9-3848-48A7-A6F5-685B719FA9FC}
+          ExtendedDataType    #Id
+          StringSize          #100
+        ENDPROPERTIES
+        
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Name                #Name
+          Table               #MPDiscountGroupSetup
+          Origin              #{9EBC57FF-75B6-4F77-9340-99701B924EDB}
+          ExtendedDataType    #DiscountGroupName
+          StringSize          #100
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoIdentification
+        PROPERTIES
+          Name                #AutoIdentification
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Id
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Idx
+      PROPERTIES
+        Name                #Idx
+        AllowDuplicates     #No
+        AlternateKey        #Yes
+        Origin              #{3F716392-70A5-4218-91DA-A85967585819}
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Id
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: DBT
+
+; Microsoft Dynamics AX Table : MPDiscountSetup unloaded
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #MPDiscountSetup
+    EnforceFKRelation 1
+    PROPERTIES
+      Name                #MPDiscountSetup
+      CreateRecIdIndex    #Yes
+      PrimaryIndex        #SurrogateKey
+      ClusterIndex        #SurrogateKey
+      Origin              #{4A2C8F89-B7E0-4B04-B7F0-F1ACC4E1E305}
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #DiscountGroupId
+        STRING
+        PROPERTIES
+          Name                #DiscountGroupId
+          Table               #MPDiscountSetup
+          Origin              #{4665EBAB-076D-47CC-83FC-99439FEA3321}
+          ExtendedDataType    #DiscountGroupId
+          StringSize          #100
+        ENDPROPERTIES
+        
+      FIELD #NumberOfDays
+        INT
+        PROPERTIES
+          Name                #NumberOfDays
+          Table               #MPDiscountSetup
+          Origin              #{AC172B57-6EFE-46BF-B212-5FD8E59E6841}
+          ExtendedDataType    #NumberOfDays
+        ENDPROPERTIES
+        
+      FIELD #Percentage
+        REAL
+        PROPERTIES
+          Name                #Percentage
+          Table               #MPDiscountSetup
+          Origin              #{4A10111B-D123-4337-8402-45CDF51C3260}
+          ExtendedDataType    #Percentage
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+    ENDGROUPS
+    
+    INDICES
+    ENDINDICES
+    FULLTEXTINDICES
+    ENDFULLTEXTINDICES
+    REFERENCES
+      REFERENCE #MPDiscountGroupSetup
+        PROPERTIES
+          Name                #MPDiscountGroupSetup
+          Table               #MPDiscountGroupSetup
+          UseDefaultRoleNames #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE PKFK
+          PROPERTIES
+            Field               #DiscountGroupId
+            RelatedField        #Id
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: UTI
+
+; Microsoft Dynamics AX Integer: NumberOfDays unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #NumberOfDays
+  INT
+    PROPERTIES
+      Name                #NumberOfDays
+      Label               #@SYS25776
+      HelpText            #@GLS112642
+      Origin              #{B6BC0ECF-C86E-4BEA-AD59-A45B3A919389}
+      LegacyId            #10253
+      CountryRegionCodes  #HU
+      Extends             #Integer
+      AllowNegative       #No
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTR
+
+; Microsoft Dynamics AX Real: Percentage unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Percentage
+  REAL
+    PROPERTIES
+      Name                #Percentage
+      Origin              #{9B82766F-0F61-44C4-9FE0-2C357E78027E}
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: DiscountGroupName unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #DiscountGroupName
+  STRING
+    PROPERTIES
+      Name                #DiscountGroupName
+      Origin              #{BD3A52C0-49BD-4515-A41E-129C0ACE1C2F}
+      StringSize          #100
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: DiscountGroupId unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #DiscountGroupId
+  STRING
+    PROPERTIES
+      Name                #DiscountGroupId
+      Origin              #{62BB5B26-8801-4C74-A409-6E65993F9918}
+      StringSize          #100
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: CarGroupDescription unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #CarGroupDescription
+  STRING
+    PROPERTIES
+      Name                #CarGroupDescription
+      Origin              #{AC88D773-32AB-4DDE-9E2D-44C0B2E6782E}
+      StringSize          #100
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Id unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Id
+  STRING
+    PROPERTIES
+      Name                #Id
+      Origin              #{0F800278-8A7A-4D1C-9A52-798E3ADBDE2D}
+      StringSize          #100
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTR
+
+; Microsoft Dynamics AX Real: Price unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Price
+  REAL
+    PROPERTIES
+      Name                #Price
+      Label               #@SYS11865
+      HelpText            #@SYS201
+      DisplayLength       #11
+      Origin              #{2905019D-0000-1000-5072-696365000000}
+      LegacyId            #413
+      Extends             #AmountMST
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTD
+
+; Microsoft Dynamics AX Date: dateDDMMYYYY unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #dateDDMMYYYY
+  DATE
+    PROPERTIES
+      Name                #dateDDMMYYYY
+      Label               #@SYS7402
+      HelpText            #@SYS86086
+      ButtonImage         #Arrow
+      Origin              #{290C0C8A-0000-1000-C75C-7D6EEA514D4D}
+      LegacyId            #3210
+      DateFormat          #DMY
+      DateSeparator       #(none)(none)
+      DateYear            #Four digits
+      DateMonth           #Always two digits
+      DateDay             #Always two digits
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTE
+
+; Microsoft Dynamics AX Enum: NoYesId unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #NoYesId
+  ENUM
+    PROPERTIES
+      Name                #NoYesId
+      DisplayLength       #0
+      Origin              #{29070150-0000-1000-4E6F-596573496400}
+      LegacyId            #336
+      EnumType            #NoYes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Date unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Date
+  STRING
+    PROPERTIES
+      Name                #Date
+      Origin              #{5857312D-4F52-4694-BCDC-BFECAD2E1928}
+      ReferenceTable      #MPRentalTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: CustLastName unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #CustLastName
+  STRING
+    PROPERTIES
+      Name                #CustLastName
+      Origin              #{EDF8F1F6-C586-407C-A1B3-312BD4E5CA29}
+      ReferenceTable      #MPRentalTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: CustFirstName unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #CustFirstName
+  STRING
+    PROPERTIES
+      Name                #CustFirstName
+      Origin              #{C1387D38-A1F2-4FFB-9BEA-F90F51D747F2}
+      ReferenceTable      #MPRentalTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Time unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Time
+  STRING
+    PROPERTIES
+      Name                #Time
+      Origin              #{9329ECC3-0BCA-4B87-8F3C-B022A34441F2}
+      ReferenceTable      #MPRentalTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Insurance unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Insurance
+  STRING
+    PROPERTIES
+      Name                #Insurance
+      Origin              #{0F778086-E603-486E-93C3-96E0A2862042}
+      ReferenceTable      #MPRentalTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: ManufacturingYear unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #ManufacturingYear
+  STRING
+    PROPERTIES
+      Name                #ManufacturingYear
+      Origin              #{10F582A0-BD49-4902-9D91-5556EAE0087D}
+      ReferenceTable      #MPCarTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Model unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Model
+  STRING
+    PROPERTIES
+      Name                #Model
+      Origin              #{CEE80983-AF96-4443-B176-42015C8663B6}
+      ReferenceTable      #MPCarTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTS
+
+; Microsoft Dynamics AX String: Brand unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #Brand
+  STRING
+    PROPERTIES
+      Name                #Brand
+      Origin              #{4ACFA282-8290-4435-A678-C2466B9A9F12}
+      ReferenceTable      #MPCarTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: UTI
+
+; Microsoft Dynamics AX Integer: CarId unloaded
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #CarId
+  INT
+    PROPERTIES
+      Name                #CarId
+      Origin              #{88D95A11-1D32-4E3B-B85F-ED0DE762FEAE}
+      ReferenceTable      #MPCarTable
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+    TYPELOOKUPS
+      TYPELOOKUP LOOKUP
+      PROPERTIES
+        Table               #MPCarTable
+        RelatedField        #CarId
+      ENDPROPERTIES
+      
+    ENDTYPELOOKUPS
+    
+  ENDUSERTYPE
+  
+
+***Element: DBE
+
+; Microsoft Dynamics AX Enumtype : MPCarStatus unloaded
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #MPCarStatus
+    PROPERTIES
+      Name                #MPCarStatus
+      Label               #Car status
+      UseEnumValue        #Yes
+      Origin              #{7899EFB7-B629-4A8D-8979-6CBBF34062AB}
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #Available
+      PROPERTIES
+        Name                #Available
+        Label               #Available
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #Rented
+      PROPERTIES
+        Name                #Rented
+        Label               #Rented
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #Service
+      PROPERTIES
+        Name                #Service
+        Label               #Service
+        EnumValue           #2
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Sofer unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Sofer
+    PROPERTIES
+      Name                #Sofer
+      Extends             #Persoana
+      Origin              #{00BC6CF0-DD50-451A-A12A-318A3A2C0241}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class Sofer extends Persoana
+        #{
+        #    str Categorie;
+        #}
+      ENDSOURCE
+      SOURCE #getInfo
+        #public str getInfo()
+        #{
+        #    str ret;
+        #
+        #    ret = super();
+        #
+        #    ret +=" Categorie: "+Categorie;
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #method1
+        #private void method1()
+        #{
+        #
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new()
+        #{
+        #    this.parmObjName("Sofer");
+        #
+        #}
+      ENDSOURCE
+      SOURCE #parmCategorie
+        #public str parmCategorie(str _categorie = categorie)
+        #{
+        #    categorie = _categorie;
+        #
+        #    return categorie;
+        #}
+      ENDSOURCE
+      SOURCE #show
+        #public void show()
+        #{
+        #    //this.method1();
+        #    this.method2();
+        #    info("Sofer: "+this.getInfo());
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Elev unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Elev
+    PROPERTIES
+      Name                #Elev
+      Extends             #Persoana
+      Origin              #{88E91BAB-0C6C-44B6-A27F-84F929001F0D}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class Elev extends Persoana
+        #{
+        #    int clasa;
+        #}
+      ENDSOURCE
+      SOURCE #getInfo
+        #public str getInfo()
+        #{
+        #    str ret;
+        #
+        #    ret = super();
+        #
+        #    ret+=" clasa: "+int2str(clasa);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new()
+        #{
+        #      this.parmObjName("Elev");
+        #}
+      ENDSOURCE
+      SOURCE #parmClasa
+        #public int parmClasa(int _clasa = clasa)
+        #{
+        #    clasa = _clasa;
+        #
+        #    return clasa;
+        #}
+      ENDSOURCE
+      SOURCE #show
+        #public void show()
+        #{
+        #    info("Elev: "+this.getInfo());
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Persoana unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Persoana
+    PROPERTIES
+      Name                #Persoana
+      Origin              #{7735A33B-1D54-4F23-AA51-72C179D9CCED}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class Persoana
+        #{
+        #    Firstname       firstname;
+        #    Lastname        lastname;
+        #
+        #    str objName;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #getInfo
+        #public str getInfo()
+        #{
+        #    return firstname+" "+lastname;
+        #}
+      ENDSOURCE
+      SOURCE #method2
+        #protected void method2()
+        #{
+        #
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #public void new()
+        #{
+        #    objName = "Persoana";
+        #}
+      ENDSOURCE
+      SOURCE #parmFirstname
+        #public Firstname parmFirstname(Firstname _firstname = firstname)
+        #{
+        #    firstname = _firstname;
+        #
+        #    return firstname;
+        #}
+      ENDSOURCE
+      SOURCE #parmLastname
+        #public LastName parmLastname(LastName _lastname = lastname)
+        #{
+        #    lastname = _lastname;
+        #
+        #    return lastname;
+        #}
+      ENDSOURCE
+      SOURCE #parmObjName
+        #public str parmObjName(str _objName = objName)
+        #{
+        #    objName = _objName;
+        #
+        #    return objName;
+        #}
+      ENDSOURCE
+      SOURCE #show
+        #public void show()
+        #{
+        #    info("Persoana: "+this.getInfo());
+        #}
+      ENDSOURCE
+      SOURCE #showObjName
+        #public void showObjName()
+        #{
+        #    info(objName);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Student unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Student
+    PROPERTIES
+      Name                #Student
+      Origin              #{CCEB9F06-AC25-4579-931A-01E1F6318CCF}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class Student
+        #{
+        #    str     firstname;
+        #    str     lastname;
+        #    int     grade;
+        #}
+      ENDSOURCE
+      SOURCE #getGrade
+        #public int getGrade()
+        #{
+        #    return grade;
+        #}
+      ENDSOURCE
+      SOURCE #setFirstname
+        #public void setFirstname(str _firstname)
+        #{
+        #    firstname = _firstname;
+        #}
+      ENDSOURCE
+      SOURCE #setGrade
+        #public void setGrade(int _grade)
+        #{
+        #    grade = _grade;
+        #    this.showGrade();
+        #}
+      ENDSOURCE
+      SOURCE #setLastname
+        #public void setLastname(str _lastname)
+        #{
+        #    lastname = _lastname;
+        #}
+      ENDSOURCE
+      SOURCE #showGrade
+        #public void showGrade()
+        #{
+        #    info("Your grade is"+" "+int2str(grade));
+        #}
+      ENDSOURCE
+      SOURCE #showName
+        #public void showName()
+        #{
+        #    info(firstname+" "+lastname);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPCarTableNew
+  PROPERTIES
+    Name                #MPCarTableNew
+    Origin              #{AA6D4E21-3B5E-43AD-B258-2C058A40EC9A}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Style               #SimpleList
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          ElementPosition     #1717986916
+          Style               #BorderlessGridContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPCarTable
+  PROPERTIES
+    Name                #MPCarTable
+    Origin              #{8ACE00EE-9C2E-410C-8376-818645259CB7}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #    QueryBuildRange brandQBR;
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    super();
+      #    //Initialize splitter
+      #    verticalSplitter = new SysFormSplitter_X(VSplitter, GridContainer, element, 300);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPCarTable
+          Table               #MPCarTable
+          Index               #CarIdx
+          InsertAtEnd         #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #active
+          #public int active()
+          #{
+          #    int ret;
+          #
+          #    ret = super();
+          #
+          #    //info(strFmt("%1",MPCarTable.CarId));
+          #
+          #    //MPRentalTable_ds.executeQuery();
+          #    // ^ this refreshes the grid
+          #
+          #    MPRentalTable_ds.research(true);
+          #    // ^ this also refreshes the entire grid but retains the cursor position
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    //brandQBR.value(queryvalue('Toyota'));
+          #    super();
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #    //brandQBR = this.query().dataSourceName('MPCarTable').addRange(fieldnum(MPCarTable,Brand));
+          #    // ^ == this.queryBuildDataSource().addRange(fieldnum(MPCarTable,Brand)).value(queryValue("Toyota"));
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPRentalTable
+          Table               #MPRentalTable
+          Index               #CarIdx
+          JoinSource          #MPCarTable
+          LinkType            #Passive
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    super();
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    MPRentalTable MPCarTable
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPCarTable
+      Style               #SimpleListDetails
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          ShowRowLabels       #No
+          DataSource          #MPCarTable
+          GridLinesStyle      #Vertical
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid1
+          Width               #Column width
+          ElementPosition     #1431655764
+          HierarchyParent     #TabPage
+          DataSource          #MPRentalTable
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Body
+          ElementPosition     #1717986916
+          Style               #MarginlessContainer
+          Columns             #3
+          Columnspace         #0
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DetailsContainer
+          ElementPosition     #1717986916
+          HierarchyParent     #Body
+          Style               #MarginlessContainer
+          TopMargin           #5
+          RightMargin         #5
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DetailsHeader
+          ElementPosition     #1073741822
+          HierarchyParent     #DetailsContainer
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          AutoDeclaration     #Yes
+          Width               #300
+          ElementPosition     #858993458
+          HierarchyParent     #Body
+          Style               #BorderlessGridContainer
+          RightMargin         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #VSplitter
+          AutoDeclaration     #Yes
+          ElementPosition     #1288490187
+          HierarchyParent     #Body
+          Style               #SplitterVerticalContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #DetailsTab
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612733
+          HierarchyParent     #DetailsContainer
+          Style               #FastTabs
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #TabPage
+          Width               #Column width
+          ElementPosition     #1431655764
+          HierarchyParent     #DetailsTab
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #Insured
+          ElementPosition     #1879048185
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          Label               #Insured
+          DataSource          #MPCarTable
+          DataMethod          #Insured
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #MPRentalTable_InsuranceNew
+          ElementPosition     #1879048185
+          HierarchyParent     #Grid1
+          BackgroundColor     #Window background
+          DataSource          #MPRentalTable
+          DataField           #InsuranceNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMBOBOX
+        PROPERTIES
+          Name                #MPCarTable_MPCarStatus
+          ElementPosition     #1744830457
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #MPCarStatus
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #MarkInsuredSelectedRecordsButton
+          ElementPosition     #1879048189
+          HierarchyParent     #RecordBasics
+          Text                #Mark Insured Selected Records
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    MultiSelectionHelper          selectionHelper = MultiSelectionHelper::construct();//Create instance of class
+            #    //Set                           selectedRecords = new Set(Types::Record);//Declare a set of type record
+            #    MPCarTable                    carTableBuffer; //Your table buffer
+            #    MPRentalTable                 rentalTableBuffer;
+            #    super();
+            #
+            #    selectionHelper.parmDataSource(MPCarTable_DS); //Set the datasource
+            #    carTableBuffer  = selectionHelper.getFirst(); //assign to table buffer the reference to selected record(s)
+            #
+            #    if (carTableBuffer.RecId)
+            #    {
+            #        while (carTableBuffer)
+            #        {
+            #            //selectedRecords.add(carTableBuffer);
+            #            //info(strFmt('Selected record.. %1',carTableBuffer.CarId));//Display selected record
+            #
+            #            ttsBegin;
+            #            while select forupdate rentalTableBuffer
+            #                where carTableBuffer.CarId == rentalTableBuffer.CarId
+            #            {
+            #                rentalTableBuffer.InsuranceNew = NoYes::Yes;
+            #                rentalTableBuffer.update();
+            #            }
+            #            ttsCommit;
+            #
+            #            carTableBuffer = selectionHelper.getNext();
+            #        }
+            #        MPCarTable_ds.executeQuery();
+            #        MPRentalTable_ds.executeQuery();
+            #    }
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL DATEEDIT
+        PROPERTIES
+          Name                #MPRentalTable_FromDateNew
+          ElementPosition     #1342177275
+          HierarchyParent     #Grid1
+          DateFormat          #DMY
+          DateSeparator       #./
+          DateYear            #Four digits
+          DateMonth           #Always two digits
+          DateDay             #Always two digits
+          Label               #From date
+          DataSource          #MPRentalTable
+          DataField           #FromDateNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL DATEEDIT
+        PROPERTIES
+          Name                #MPRentalTable_ToDateNew
+          ElementPosition     #1610612730
+          HierarchyParent     #Grid1
+          DateFormat          #DMY
+          DateSeparator       #./
+          DateYear            #Four digits
+          DateMonth           #Always two digits
+          DateDay             #Always two digits
+          Label               #To date
+          DataSource          #MPRentalTable
+          DataField           #ToDateNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #MPCarTable_CarId
+          ElementPosition     #536870910
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #CarId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CarId
+          ElementPosition     #536870910
+          HierarchyParent     #Grid1
+          DataSource          #MPRentalTable
+          DataField           #CarId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #TotalNumberOfRentals
+          ElementPosition     #1610612730
+          HierarchyParent     #Grid
+          Label               #Total Rentals
+          DataSource          #MPCarTable
+          DataMethod          #TotalNumberOfRentals
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL REALEDIT
+        PROPERTIES
+          Name                #MPCarTable_PricePerDay
+          ElementPosition     #1476395002
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #PricePerDay
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_Brand
+          ElementPosition     #805306365
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #Brand
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_CarGroupId
+          ElementPosition     #671088637
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #CarGroupId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_ManufacturingYear
+          ElementPosition     #1342177275
+          HierarchyParent     #Grid
+          Label               #Manufacturing Year
+          DataSource          #MPCarTable
+          DataField           #ManufacturingYear
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_Model
+          ElementPosition     #1073741820
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #Model
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CustFirstName
+          ElementPosition     #805306365
+          HierarchyParent     #Grid1
+          DataSource          #MPRentalTable
+          DataField           #CustFirstName
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CustLastName
+          ElementPosition     #1073741820
+          HierarchyParent     #Grid1
+          DataSource          #MPRentalTable
+          DataField           #CustLastName
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPRentalTable
+  PROPERTIES
+    Name                #MPRentalTable
+    Origin              #{ECB865B3-0641-48EE-A801-CE3287C8907D}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #
+      #    QueryFilter             queryFilter;
+      #    QueryBuildRange         qbrStringEdit;
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    super();
+      #    //Initialize splitter
+      #
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPRentalTable
+          Table               #MPRentalTable
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD CarId
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #lookup
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    super(_formControl, _filterStr);
+                #    // ^ super in this case handles the autolookup
+                #    //str                     currentyear = int2str(year(systemDateGet())-10);
+                #
+                #
+                #    //MPCarTable::CarIdLookup(_formControl, "> "+currentyear);
+                #    //SysQuery::gr
+                #
+                #
+                #
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #write
+          #public void write()
+          #{
+          #    super();
+          #
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    //queryFilter.value(element.design().controlName("StringEdit").valueStr());
+          #    //qbrStringEdit.value(element.design().controlName("StringEdit").valueStr());
+          #
+          #
+          #    qbrStringEdit.value(StringEditCarId.valueStr());
+          #    // AutoDeclaration -> Yes which allows to call the variable by name (StringEditCarId)
+          #
+          #    this.queryBuildDataSource().addSortField(fieldNum(MPRentalTable, CarId), SortOrder::Ascending);
+          #    super();
+          #}
+        ENDSOURCE
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #
+          #    //queryFilter = MPRentalTable_ds.query().addQueryFilter(MPRentalTable_ds.queryBuildDataSource(),"CarId");
+          #    qbrStringEdit = MPRentalTable_ds.queryBuildDataSource().addRange(fieldnum(MPRentalTable, CarId));
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPCarTable
+          Table               #MPCarTable
+          JoinSource          #MPRentalTable
+          LinkType            #InnerJoin
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD ManufacturingYear
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #lookup
+                #/*
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    super(_formControl, _filterStr);
+                #}
+                #*/
+                #
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    ;
+                #
+                #    MPCarTable::ManufacturingYearLookup(_formControl, "2008");
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD CarId
+            PROPERTIES
+            ENDPROPERTIES
+            
+            METHODS
+              SOURCE #lookup
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    super(_formControl, _filterStr);
+                #}
+                #
+                #/*
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    ;
+                #
+                #    MPCarTable::CarIdLookup(_formControl, "2008");
+                #}
+                #*/
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #validateWrite
+          #public boolean validateWrite()
+          #{
+          #    //boolean ret;
+          #
+          #    //ret = super();
+          #
+          #    //return ret;
+          #    return true;
+          #}
+        ENDSOURCE
+        SOURCE #write
+          #public void write()
+          #{
+          #    //super();
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    MPCarTable MPRentalTable
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPRentalTable
+      Style               #SimpleListDetails
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #MPRentalTable
+          GridLinesStyle      #Vertical
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Body
+          ElementPosition     #1717986916
+          Style               #MarginlessContainer
+          Columns             #3
+          Columnspace         #0
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          AutoDeclaration     #Yes
+          Width               #Column width
+          ElementPosition     #1431655764
+          HierarchyParent     #Body
+          Style               #BorderlessGridContainer
+          RightMargin         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL CHECKBOX
+        PROPERTIES
+          Name                #MPRentalTable_InsuranceNew
+          ElementPosition     #1342177275
+          HierarchyParent     #Grid
+          BackgroundColor     #Window background
+          DataSource          #MPRentalTable
+          DataField           #InsuranceNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL DATEEDIT
+        PROPERTIES
+          Name                #MPRentalTable_FromDateNew
+          ElementPosition     #958698051
+          HierarchyParent     #Grid
+          DateFormat          #DMY
+          DateSeparator       #./
+          DateYear            #Four digits
+          DateMonth           #Always two digits
+          DateDay             #Always two digits
+          Label               #From date
+          DataSource          #MPRentalTable
+          DataField           #FromDateNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL DATEEDIT
+        PROPERTIES
+          Name                #MPRentalTable_ToDateNew
+          ElementPosition     #1150437662
+          HierarchyParent     #Grid
+          DateFormat          #DMY
+          DateSeparator       #./
+          DateYear            #Four digits
+          DateMonth           #Always two digits
+          DateDay             #Always two digits
+          Label               #To date
+          DataSource          #MPRentalTable
+          DataField           #ToDateNew
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CarId
+          ElementPosition     #383479220
+          HierarchyParent     #Grid
+          DataSource          #MPRentalTable
+          DataField           #CarId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL REALEDIT
+        PROPERTIES
+          Name                #MPRentalTable_Amount
+          ElementPosition     #1476395002
+          HierarchyParent     #Grid
+          DataSource          #MPRentalTable
+          DataField           #Amount
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_Brand
+          ElementPosition     #1610612730
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #Brand
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_ManufacturingYear
+          ElementPosition     #1968526670
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #ManufacturingYear
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarTable_Model
+          ElementPosition     #1789569700
+          HierarchyParent     #Grid
+          DataSource          #MPCarTable
+          DataField           #Model
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CustFirstName
+          ElementPosition     #575218830
+          HierarchyParent     #Grid
+          DataSource          #MPRentalTable
+          DataField           #CustFirstName
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPRentalTable_CustLastName
+          ElementPosition     #766958440
+          HierarchyParent     #Grid
+          DataSource          #MPRentalTable
+          DataField           #CustLastName
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #StringEditCarId
+          AutoDeclaration     #Yes
+          ElementPosition     #1431655764
+          HierarchyParent     #CustomFilterGroup
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #lookup
+            #public void lookup()
+            #{
+            #    Query       query;
+            #
+            #    QueryBuildDataSource    qbdsCar;
+            #    SysTableLookup          sysTableLookup;
+            #
+            #    super();
+            #
+            #
+            #    query = new Query();
+            #
+            #    qbdsCar = query.addDataSource(tableNum(MPCarTable));
+            #    //qbdsCar.relations(true);
+            #
+            #    sysTableLookup = SysTableLookup::newParameters(tableNum(MPCarTable), this);
+            #    sysTableLookup.addLookupfield(fieldNum(MPCarTable, CarId));
+            #    sysTableLookup.addLookupfield(fieldNum(MPCarTable, Brand));
+            #    sysTableLookup.addLookupfield(fieldNum(MPCarTable, Model));
+            #    sysTableLookup.addLookupfield(fieldNum(MPCarTable, ManufacturingYear));
+            #    sysTableLookup.parmQuery(query);
+            #    sysTableLookup.performFormLookup();
+            #
+            #}
+          ENDSOURCE
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    MPRentalTable_ds.executeQuery();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+          SOURCE #validate
+            #public boolean validate()
+            #{
+            #    boolean     ret;
+            #    MPCarTable  buffer;
+            #
+            #    ret = super();
+            #
+            #    /*
+            #
+            #    if (!this.valueStr())
+            #    {
+            #        return ret;
+            #    }
+            #
+            #    else
+            #    {
+            #        select CarId from buffer
+            #            where buffer.CarId == any2int(this.valueStr());
+            #
+            #        if (!buffer.RecId)
+            #        {
+            #            ret = checkFailed("The CarId value must exist in the lookup");
+            #        }
+            #
+            #        return ret;
+            #    }
+            #
+            #    */
+            #
+            #    if (this.valueStr())
+            #    {
+            #        select CarId from buffer
+            #            where buffer.CarId == any2int(this.valueStr());
+            #
+            #        if (!buffer.RecId)
+            #        {
+            #            ret = checkFailed("The CarId value must exist in the lookup");
+            #        }
+            #    }
+            #
+            #    return ret;
+            #
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPCarGroups
+  PROPERTIES
+    Name                #MPCarGroups
+    Origin              #{7A44D567-C220-40B8-99D6-D8C3E1ED6A5C}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPCarGroups
+          Table               #MPCarGroups
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPCarGroups
+      Style               #SimpleList
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #MPCarGroups
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          ElementPosition     #1717986916
+          Style               #BorderlessGridContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarGroups_Description
+          ElementPosition     #1288490187
+          HierarchyParent     #Grid
+          DataSource          #MPCarGroups
+          DataField           #Description
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarGroups_DiscountGroupId
+          ElementPosition     #1717986916
+          HierarchyParent     #Grid
+          DataSource          #MPCarGroups
+          DataField           #DiscountGroupId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPCarGroups_Id
+          ElementPosition     #858993458
+          HierarchyParent     #Grid
+          DataSource          #MPCarGroups
+          DataField           #Id
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPDiscountGroupSetup
+  PROPERTIES
+    Name                #MPDiscountGroupSetup
+    Origin              #{BC6F391B-DD78-4CC6-B8B3-56B57B2E97C4}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPDiscountGroupSetup
+          Table               #MPDiscountGroupSetup
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPDiscountGroupSetup
+      Style               #SimpleList
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #MPDiscountGroupSetup
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          ElementPosition     #1717986916
+          Style               #BorderlessGridContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPDiscountGroupSetup_Id
+          ElementPosition     #1073741822
+          HierarchyParent     #Grid
+          DataSource          #MPDiscountGroupSetup
+          DataField           #Id
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPDiscountGroupSetup_Name
+          ElementPosition     #1610612733
+          HierarchyParent     #Grid
+          DataSource          #MPDiscountGroupSetup
+          DataField           #Name
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPDiscountSetupNew
+  PROPERTIES
+    Name                #MPDiscountSetupNew
+    Origin              #{819CFEB3-1BE2-4499-8940-6A423FCEC584}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    super();
+      #    //Initialize splitter
+      #    verticalSplitter = new SysFormSplitter_X(VSplitter, GridContainer, element, 300);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPDiscountGroupSetup
+          Table               #MPDiscountGroupSetup
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPDiscountSetup
+          Table               #MPDiscountSetup
+          JoinSource          #MPDiscountGroupSetup
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+    MPDiscountSetup MPDiscountGroupSetup
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPDiscountSetupNew
+      Style               #SimpleListDetails
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          AllowEdit           #No
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #MPDiscountGroupSetup
+          GridLinesStyle      #Vertical
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid1
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #TabPage
+          DataSource          #MPDiscountSetup
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #Body
+          ElementPosition     #1717986916
+          Style               #MarginlessContainer
+          Columns             #3
+          Columnspace         #0
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DetailsContainer
+          ElementPosition     #1717986916
+          HierarchyParent     #Body
+          Style               #MarginlessContainer
+          TopMargin           #5
+          RightMargin         #5
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #DetailsHeader
+          ElementPosition     #1073741822
+          HierarchyParent     #DetailsContainer
+          FrameType           #None
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          AutoDeclaration     #Yes
+          Width               #300
+          ElementPosition     #858993458
+          HierarchyParent     #Body
+          Style               #BorderlessGridContainer
+          RightMargin         #0
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #VSplitter
+          AutoDeclaration     #Yes
+          ElementPosition     #1288490187
+          HierarchyParent     #Body
+          Style               #SplitterVerticalContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TAB
+        PROPERTIES
+          Name                #DetailsTab
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1610612733
+          HierarchyParent     #DetailsContainer
+          Style               #FastTabs
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL TABPAGE
+        PROPERTIES
+          Name                #TabPage
+          ElementPosition     #1431655764
+          HierarchyParent     #DetailsTab
+          Columns             #2
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #MPDiscountSetup_NumberOfDays
+          ElementPosition     #1288490187
+          HierarchyParent     #Grid1
+          DataSource          #MPDiscountSetup
+          DataField           #NumberOfDays
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL REALEDIT
+        PROPERTIES
+          Name                #MPDiscountSetup_Percentage
+          ElementPosition     #1717986916
+          HierarchyParent     #Grid1
+          DataSource          #MPDiscountSetup
+          DataField           #Percentage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPDiscountGroupSetup_Id
+          ElementPosition     #1073741822
+          HierarchyParent     #Grid
+          DataSource          #MPDiscountGroupSetup
+          DataField           #Id
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPDiscountGroupSetup_Name
+          ElementPosition     #1610612733
+          HierarchyParent     #Grid
+          DataSource          #MPDiscountGroupSetup
+          DataField           #Name
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #MPDiscountSetup_DiscountGroupId
+          ElementPosition     #858993458
+          HierarchyParent     #Grid1
+          DataSource          #MPDiscountSetup
+          DataField           #DiscountGroupId
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MPDiscountSetup
+  PROPERTIES
+    Name                #MPDiscountSetup
+    Origin              #{FF115A10-A7D1-4BC7-A447-759DF7E22902}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #MPSetup
+          Table               #MPDiscountSetup
+          InsertAtEnd         #No
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Caption             #MPDiscountSetup
+      Style               #SimpleList
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #MPSetup
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          AutoDeclaration     #Yes
+          ElementPosition     #1717986916
+          Style               #BorderlessGridContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL INTEDIT
+        PROPERTIES
+          Name                #MPSetup_NumberOfDays
+          ElementPosition     #1073741822
+          HierarchyParent     #Grid
+          DataSource          #MPSetup
+          DataField           #NumberOfDays
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL REALEDIT
+        PROPERTIES
+          Name                #MPSetup_Percentage
+          ElementPosition     #1610612733
+          HierarchyParent     #Grid
+          DataSource          #MPSetup
+          DataField           #Percentage
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Job22 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job22
+    #static void Job22(Args _args)
+    #{
+    #    MPDiscountSetup         setupBuffer, setupBuffer2;
+    #    MPDiscountGroupSetup    setupGroupBuffer;
+    #    MPCarTable              carBuffer;
+    #    MPCarGroups             carGroupsBuffer;
+    #    MPRentalTable           rentalBuffer;
+    #
+    #
+    #    while select CarId from rentalBuffer
+    #        join carBuffer
+    #            where carBuffer.CarId == rentalBuffer.CarId
+    #                join carGroupsBuffer
+    #                    where carGroupsBuffer.id == carBuffer.CarGroupId
+    #                        join setupGroupBuffer
+    #                            where setupGroupBuffer.Id == carGroupsBuffer.DiscountGroupId
+    #                                join setupBuffer
+    #                                    where setupBuffer.DiscountGroupId == setupGroupBuffer.Id
+    #    {
+    #        info("ceva");
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{C8515465-E117-4428-B887-1411F6CDF53C}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: OrigPractice unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #OrigPractice
+    #static void OrigPractice(Args _args)
+    #{
+    #    MPRentalTable   testbuff;
+    #
+    #    select forUpdate testbuff
+    #        where testbuff.RecId == 5637145736;
+    #
+    #    testbuff.CarId = 12;
+    #    info(int2str(testbuff.CarId));
+    #    info(int2str(testbuff.orig().CarId));
+    #    ttsBegin;
+    #    testbuff.update();
+    #    ttsCommit;
+    #    info(int2str(testbuff.CarId));
+    #    info(int2str(testbuff.orig().CarId));
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{AA514EE5-6334-4898-8A59-851B37A9918B}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Job21Persoana unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job21Persoana
+    #static void Job21Persoana(Args _args)
+    #{
+    #    Persoana pers;
+    #    Sofer soferIon;
+    #    Elev elevVasile;
+    #    ;
+    #    /*
+    #    pers = new Persoana();
+    #    pers.parmFirstname("Andrei");
+    #    pers.parmLastname("Dragos");
+    #
+    #    //pers.show();
+    #
+    #    elevVasile = new Elev();
+    #    elevVasile.parmFirstname("Andrei");
+    #    elevVasile.parmLastname("Dragos");
+    #    elevVasile.parmClasa(11);
+    #    */
+    #    //elevVasile.show();
+    #
+    #    soferIon = new Sofer();
+    #    soferIon.parmFirstname("Andrei");
+    #    soferIon.parmLastname("Dragos");
+    #
+    #    soferIon.parmCategorie("B");
+    #
+    #    SoferIon.show();
+    #    SoferIon.showObjName();
+    #    //soferIon.method1();
+    #    //soferIon.method2();
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{24E22868-7E27-43B7-BC03-969192A85108}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: SelectsOnCarTable4 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #SelectsOnCarTable4
+    #static void SelectsOnCarTable4(Args _args)
+    #{
+    #    MPCarTable          carTable;
+    #    MPRentalTable       rentalTable;
+    #
+    #    Query       query;
+    #    QueryRun    queryRun;
+    #
+    #    QueryBuildDataSource    qbdsRental, qbdsCar;
+    #
+    #    info("Car id, Brand, Model");
+    #
+    #    while select CarId, Brand, Model from carTable
+    #
+    #            notExists join rentalTable
+    #                where carTable.CarId == rentalTable.CarId
+    #
+    #
+    #    {
+    #        info(strFmt("%1, %2, %3", carTable.CarId, carTable.Brand, carTable.Model));
+    #    }
+    #
+    #
+    #
+    #    info(" query:");
+    #    query = new Query();
+    #    qbdsCar = query.addDataSource(tableNum(MPCarTable));
+    #
+    #    qbdsRental = qbdsCar.addDataSource(tableNum(MPRentalTable));
+    #    qbdsRental.joinMode(JoinMode::NoExistsJoin);
+    #    qbdsRental.addLink(fieldnum(MPCarTable, CarId), fieldnum(MPRentalTable, CarId));
+    #
+    #    queryRun = new QueryRun(query);
+    #
+    #    while (queryRun.next())
+    #    {
+    #        rentalTable = queryRun.get(tableNum(MPRentalTable));
+    #        carTable = queryRun.get(tableNum(MPCarTable));
+    #
+    #        info(strFmt("%1, %2, %3", carTable.CarId, carTable.Brand, carTable.Model));
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{D4B51467-AA86-47EA-932C-2EBA9D882521}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: SelectsOnCarTable3 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #SelectsOnCarTable3
+    #static void SelectsOnCarTable3(Args _args)
+    #{
+    #    MPCarTable          carTable;
+    #    MPRentalTable       rentalTable;
+    #
+    #    Query       query;
+    #    QueryRun    queryRun;
+    #
+    #    QueryBuildDataSource    qbdsRental, qbdsCar;
+    #    QueryBuildRange         qbr1, qbr2;
+    #
+    #    info("Customer First Name, Customer Last Name, Brand");
+    #
+    #    while select CustFirstName, CustLastName from rentalTable
+    #
+    #            join Brand from carTable
+    #                where carTable.CarId == rentalTable.CarId
+    #                    && rentalTable.InsuranceNew == NoYes::No
+    #                    && carTable.Brand == "Audi"
+    #
+    #    {
+    #        info(strFmt("%1, %2, %3", rentalTable.CustFirstName, rentalTable.CustLastName, carTable.Brand));
+    #    }
+    #
+    #    info(" query:");
+    #    query = new Query();
+    #    qbdsRental = query.addDataSource(tableNum(MPRentalTable));
+    #
+    #    qbr1 = qbdsRental.addRange(fieldnum(MPRentalTable, InsuranceNew));
+    #    qbr1.value(queryValue(NoYes::No));
+    #
+    #    qbdsCar = qbdsRental.addDataSource(tableNum(MPCarTable));
+    #    qbdsCar.addLink(fieldnum(MPRentalTable, CarId), fieldnum(MPCarTable, CarId));
+    #
+    #    qbr2 = qbdsCar.addRange(fieldnum(MPCarTable, Brand));
+    #    qbr2.value("Audi");
+    #
+    #    queryRun = new QueryRun(query);
+    #
+    #    while (queryRun.next())
+    #    {
+    #        rentalTable = queryRun.get(tableNum(MPRentalTable));
+    #        carTable = queryRun.get(tableNum(MPCarTable));
+    #
+    #        info(strFmt("%1, %2, %3", rentalTable.CustFirstName, rentalTable.CustLastName, carTable.Brand));
+    #    }
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{0A331BE0-087C-43DE-849F-F4BAEA85A769}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: SelectsOnCarTable2 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #SelectsOnCarTable2
+    #static void SelectsOnCarTable2(Args _args)
+    #{
+    #    MPCarTable          carTable;
+    #    MPRentalTable       rentalTable;
+    #
+    #    Query       query;
+    #    QueryRun    queryRun;
+    #
+    #    QueryBuildDataSource    qbdsRental, qbdsCar;
+    #    QueryBuildRange         qbr;
+    #
+    #
+    #    info("Car id, Model, Customer First Name, Customer Last Name");
+    #
+    #    while select CarId, Model from carTable
+    #
+    #            outer join CustFirstName, CustLastName from rentalTable
+    #                where carTable.CarId == rentalTable.CarId
+    #                    && rentalTable.InsuranceNew == NoYes::Yes
+    #
+    #    {
+    #        info(strFmt("%1, %2, %3, %4", carTable.CarId, carTable.Model, rentalTable.CustFirstName, rentalTable.CustLastName));
+    #    }
+    #
+    #    info(" query:");
+    #    query = new Query();
+    #    qbdsCar = query.addDataSource(tableNum(MPCarTable));
+    #
+    #    qbdsRental = qbdsCar.addDataSource(tableNum(MPRentalTable));
+    #    qbdsRental.joinMode(JoinMode::OuterJoin);
+    #    qbdsRental.addLink(fieldnum(MPCarTable, CarId), fieldnum(MPRentalTable, CarId));
+    #
+    #    qbr = qbdsRental.addRange(fieldnum(MPRentalTable, InsuranceNew));
+    #    qbr.value(queryValue(NoYes::Yes));
+    #
+    #    queryRun = new QueryRun(query);
+    #
+    #    while (queryRun.next())
+    #    {
+    #        rentalTable = queryRun.get(tableNum(MPRentalTable));
+    #        carTable = queryRun.get(tableNum(MPCarTable));
+    #
+    #        info(strFmt("%1, %2, %3, %4", carTable.CarId, carTable.Model, rentalTable.CustFirstName, rentalTable.CustLastName));
+    #    }
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{FEBD6733-33D9-4BF2-BAFF-F90C639CC941}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: SelectsOnCarTable1 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #SelectsOnCarTable1
+    #static void SelectsOnCarTable1(Args _args)
+    #{
+    #    Query       query;
+    #    QueryRun    queryRun;
+    #
+    #    QueryBuildDataSource    qbdsRental, qbdsCar;
+    #    QueryBuildRange         qbr;
+    #
+    #    MPCarTable              carTable;
+    #    MPRentalTable           rentalTable;
+    #
+    #    info("Card id, Brand, Model, Customer First Name, Customer Last Name, Time");
+    #
+    #    while select CustFirstName, CustLastName, Time from rentalTable
+    #        where rentalTable.InsuranceNew == NoYes::Yes
+    #
+    #        join CarId, Brand, Model from carTable
+    #            where carTable.CarId == rentalTable.CarId
+    #    {
+    #        info(strFmt("%1, %2, %3, %4, %5, %6",
+    #        carTable.CarId, carTable.Brand, carTable.Model,
+    #        rentalTable.CustFirstName, rentalTable.CustLastName, rentalTable.Time));
+    #    }
+    #
+    #    info(" query:");
+    #    query = new Query();
+    #    qbdsRental = query.addDataSource(tableNum(MPRentalTable));
+    #
+    #    qbr = qbdsRental.addRange(fieldnum(MPRentalTable, InsuranceNew));
+    #    qbr.value(queryValue(NoYes::Yes));
+    #
+    #    qbdsCar = qbdsRental.addDataSource(tableNum(MPCarTable));
+    #    //qbdsCar.relations(true);
+    #    qbdsCar.addLink(fieldnum(MPRentalTable, CarId), fieldnum(MPCarTable, CarId));
+    #
+    #    queryRun = new QueryRun(query);
+    #
+    #    while (queryRun.next())
+    #    {
+    #        rentalTable = queryRun.get(tableNum(MPRentalTable));
+    #        carTable = queryRun.get(tableNum(MPCarTable));
+    #
+    #        info(strFmt("%1, %2, %3, %4, %5, %6",
+    #        carTable.CarId, carTable.Brand, carTable.Model,
+    #        rentalTable.CustFirstName, rentalTable.CustLastName, rentalTable.Time));
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{DED4F192-6E78-402E-ACE9-9B73E0ABD574}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: PracticingInnerJoin unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #PracticingInnerJoin
+    #static void PracticingInnerJoin(Args _args)
+    #{
+    #    CustTable           custTable;
+    #    CustGroup           custGroup;
+    #
+    #    info("AccountNum, CustGroup, PaymTermId, ClearingPeriod, CustGroup, PaymTermId");
+    #
+    #    while select AccountNum, CustGroup, PaymTermId from custTable
+    #        where custTable.CustGroup == "30"
+    #            && custTable.PaymTermId == "Net30"
+    #        join ClearingPeriod, CustGroup, PaymTermId from custGroup
+    #            where custTable.CustGroup == custGroup.CustGroup
+    #    {
+    #        info(strFmt("%1, %2, %3, %4, %5, %6", custTable.AccountNum, custTable.CustGroup, custTable.PaymTermId, custGroup.ClearingPeriod, custGroup.CustGroup, custGroup.PaymTermId));
+    #    }
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{A60FD923-6C08-4877-BF9A-1F9FDA413EA5}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Job20 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job20
+    #static void Job20(Args _args)
+    #{
+    #    Student     studentobj;
+    #    Student     studentobj2;
+    #    int         x;
+    #    int         y;
+    #
+    #
+    #
+    #
+    #    studentobj = new Student();
+    #    studentobj2 = new Student();
+    #    studentobj.setFirstname("Adi");
+    #    studentobj2.setFirstname("Matei");
+    #    studentobj = studentobj2;
+    #    studentobj2.setFirstname("Vasile");
+    #
+    #
+    #    studentobj.setGrade(3);
+    #    studentobj2.setGrade(5);
+    #
+    #    if(studentobj != studentobj2)
+    #    {
+    #        info("Diferite");
+    #    }
+    #    else
+    #    {
+    #        info("Egale");
+    #    }
+    #
+    #
+    #
+    #    x = 5;
+    #    y = 10;
+    #    x = y;
+    #    y = 20;
+    #
+    #
+    #
+    #
+    #
+    #    info("done");
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{642E74B0-B396-4F48-91C6-540AD8CD512E}
+  ENDPROPERTIES
+  
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : MP_RentalService unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #MP_RentalService
+  SHARED
+  PROPERTIES
+    Name                #MP_RentalService
+    Origin              #{D356252D-E065-45B0-8529-9E6E918DBC4D}
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    GROUP #Data Dictionary
+      PROPERTIES
+        Name                #Data Dictionary
+        ProjectGroupType    #DataDictionary
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      GROUP #Tables
+        PROPERTIES
+          Name                #Tables
+          ProjectGroupType    #Tables
+          GroupMask           #
+          PreventEditProperties #No
+        ENDPROPERTIES
+        
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 44
+          UTILOBJECTID 104502
+          NODETYPE 204
+          NAME #MPCarTable
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 44
+          UTILOBJECTID 104503
+          NODETYPE 204
+          NAME #MPRentalTable
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 44
+          UTILOBJECTID 104505
+          NODETYPE 204
+          NAME #MPCarGroups
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 44
+          UTILOBJECTID 104506
+          NODETYPE 204
+          NAME #MPDiscountGroupSetup
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 44
+          UTILOBJECTID 104504
+          NODETYPE 204
+          NAME #MPDiscountSetup
+        ENDNODE
+        ENDGROUP
+        
+      GROUP #Extended Data Types
+        PROPERTIES
+          Name                #Extended Data Types
+          ProjectGroupType    #ExtendedDataTypes
+          GroupMask           #
+          PreventEditProperties #No
+        ENDPROPERTIES
+        
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 10253
+          NODETYPE 232
+          NAME #NumberOfDays
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104443
+          NODETYPE 233
+          NAME #Percentage
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104441
+          NODETYPE 234
+          NAME #DiscountGroupName
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104440
+          NODETYPE 234
+          NAME #DiscountGroupId
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104439
+          NODETYPE 234
+          NAME #CarGroupDescription
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104438
+          NODETYPE 234
+          NAME #Id
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 413
+          NODETYPE 233
+          NAME #Price
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 3210
+          NODETYPE 231
+          NAME #dateDDMMYYYY
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 336
+          NODETYPE 228
+          NAME #NoYesId
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104436
+          NODETYPE 234
+          NAME #Date
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104435
+          NODETYPE 234
+          NAME #CustLastName
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104434
+          NODETYPE 234
+          NAME #CustFirstName
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104433
+          NODETYPE 234
+          NAME #Time
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104432
+          NODETYPE 234
+          NAME #Insurance
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104431
+          NODETYPE 234
+          NAME #ManufacturingYear
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104430
+          NODETYPE 234
+          NAME #Model
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104429
+          NODETYPE 234
+          NAME #Brand
+        ENDNODE
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 41
+          UTILOBJECTID 104428
+          NODETYPE 232
+          NAME #CarId
+        ENDNODE
+        ENDGROUP
+        
+      GROUP #Base Enums
+        PROPERTIES
+          Name                #Base Enums
+          ProjectGroupType    #BaseEnums
+          GroupMask           #
+          PreventEditProperties #No
+        ENDPROPERTIES
+        
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 40
+          UTILOBJECTID 101426
+          NODETYPE 209
+          NAME #MPCarStatus
+        ENDNODE
+        ENDGROUP
+        
+      ENDGROUP
+      
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024792
+        NODETYPE 329
+        NAME #Sofer
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024791
+        NODETYPE 329
+        NAME #Elev
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024790
+        NODETYPE 329
+        NAME #Persoana
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024789
+        NODETYPE 329
+        NAME #Student
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Forms
+      PROPERTIES
+        Name                #Forms
+        ProjectGroupType    #Forms
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPCarTableNew
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPCarTable
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPRentalTable
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPCarGroups
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPDiscountGroupSetup
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPDiscountSetupNew
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MPDiscountSetup
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Jobs
+      PROPERTIES
+        Name                #Jobs
+        ProjectGroupType    #Jobs
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Job22
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #OrigPractice
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Job21Persoana
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #SelectsOnCarTable4
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #SelectsOnCarTable3
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #SelectsOnCarTable2
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #SelectsOnCarTable1
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #PracticingInnerJoin
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Job20
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END

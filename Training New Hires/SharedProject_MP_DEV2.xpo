@@ -1,0 +1,1923 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Calculator unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Calculator
+    PROPERTIES
+      Name                #Calculator
+      Origin              #{5DA0FEF9-6273-46D3-A070-0A69281BEA71}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #add
+        #public real add()
+        #{
+        #    return value1 + value2;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #public class Calculator
+        #{
+        #    real    value1;
+        #    real    value2;
+        #}
+      ENDSOURCE
+      SOURCE #divide
+        #public real divide()
+        #{
+        #    return value1 / value2;
+        #}
+      ENDSOURCE
+      SOURCE #multiple
+        #public real multiple()
+        #{
+        #    return value1 * value2;
+        #}
+      ENDSOURCE
+      SOURCE #parmValue1
+        #public real parmValue1(real    _value1 = value1)
+        #{
+        #    value1 = _value1;
+        #    return value1;
+        #}
+      ENDSOURCE
+      SOURCE #parmValue2
+        #public real parmValue2(real    _value2 = value2)
+        #{
+        #    value2 = _value2;
+        #    return value2;
+        #}
+      ENDSOURCE
+      SOURCE #substract
+        #public real substract()
+        #{
+        #    return value1 - value2;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: SalesTableTypeDelegate unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #SalesTableTypeDelegate
+    PROPERTIES
+      Name                #SalesTableTypeDelegate
+      Origin              #{C2DE2D44-5B4B-4214-96C6-606D3A3408F4}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #class SalesTableTypeDelegate
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #mayPackingSlipBeUpdated
+        #public static void mayPackingSlipBeUpdated(XppPrePostArgs _args)
+        #{
+        #    boolean ret;
+        #
+        #    ret = _args.getReturnValue();
+        #
+        #    _args.setReturnValue(ret && dayOfWk(systemDateGet()) == WeekDays::Monday);
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: PrintMyName unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #PrintMyName
+    PROPERTIES
+      Name                #PrintMyName
+      Origin              #{72F65BDC-F663-4D87-9E3C-90495C4F1286}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #public class PrintMyName
+        #{
+        #    str 20      myName;
+        #}
+      ENDSOURCE
+      SOURCE #printMyName
+        #public void printMyName()
+        #{
+        #    print myName;
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #public void run()
+        #{
+        #    this.setMyName("Matei");
+        #    this.printMyName();
+        #}
+      ENDSOURCE
+      SOURCE #setMyName
+        #public void setMyName(str _myName)
+        #{
+        #    myName = _myName;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: PurchOrderCreateFromFile unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #PurchOrderCreateFromFile
+    #static void PurchOrderCreateFromFile(Args _args)
+    #
+    #{
+    #    NumberSeq                                               numberSeq;
+    #    PurchTable                                              purchTable;
+    #    PurchLine                                               purchLine;
+    #    InventDim                                               inventDimConfig;
+    #
+    #    CommaIo                                                 file;
+    #    container                                               readCon;
+    #    Dialog                                                  d;
+    #    DialogField                                             df1, df2;
+    #
+    #
+    #
+    #    // Create a comma separated file as input with col1 = product and col2 = description
+    #
+    #    d = new Dialog("Import items");
+    #    df1 = d.addField(ExtendedTypeStr("FilenameOpen"));
+    #
+    #    if (d.run())
+    #
+    #    {
+    #        file = new CommaIo(df1.value(), 'r');
+    #        file.inFieldDelimiter(',');
+    #        readCon = file.read();//read first row - the headers row
+    #        readCon = file.read();//read second row - this has the values
+    #
+    #        numberSeq = NumberSeq::newGetNum(PurchParameters::numRefPurchId());
+    #        numberSeq.used();
+    #
+    #        purchTable.PurchId = numberSeq.num();
+    #        purchTable.initValue();
+    #        purchTable.initFromVendTable(VendTable::find(conPeek(readCon,1)));
+    #
+    #        if (!purchTable.validateWrite())
+    #            {
+    #                throw Exception::Error;
+    #            }
+    #
+    #        purchTable.insert();
+    #
+    #        while (readCon != conNull())
+    #        {
+    #            ttsBegin;
+    #
+    #            // search for dimid by siteid and whid
+    #            inventDimConfig.clear();
+    #            inventDimConfig.InventLocationId  = conPeek(readCon,4);
+    #            inventDimConfig.InventSiteId = conPeek(readCon,3);
+    #            inventDimConfig = InventDim::findOrCreate(inventDimConfig);
+    #
+    #            purchLine.clear();
+    #            purchLine.PurchId = purchTable.PurchId;
+    #            purchLine.initFromPurchTable(purchTable);
+    #            purchLine.ItemId = conPeek(readCon,2);
+    #            purchLine.initFromItemOrCategory(purchLine.ItemId, purchLine.ProcurementCategory, purchLine.Name);
+    #            purchLine.PurchQty = conPeek(readCon,5);
+    #            purchLine.PurchPrice = conPeek(readCon,6);
+    #            purchLine.InventDimId = inventDimConfig.inventDimId;
+    #            purchLine.createLine(true, false, false, true, true, false);
+    #
+    #
+    #            readCon = file.read();
+    #
+    #            ttsCommit;
+    #
+    #            info(strFmt("Purchase item '%1' has been added to purchase order '%2'",purchLine.ItemId,purchTable.PurchId));
+    #
+    #        }
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{23CC2F61-1816-4165-B437-1100D23EE169}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: ImportProducts unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #ImportProducts
+    #static void ImportProducts(Args _args)
+    #
+    #{
+    #    //Classes
+    #    EcoResProductService                            ecoResProdService;
+    #    EcoResEcoResProduct                             ecoResEcoResProduct;
+    #    EcoResEcoResProduct_Product_Distinct            ecoResEcoResProduct_Product_Distinct;
+    #    EcoResEcoResProduct_Translation                 ecoResEcoResProduct_Translation;
+    #    EcoResEcoResProduct_Identifier                  ecoResEcoResProduct_Identifier;
+    #
+    # //Tables
+    #    InventTable                                     inventTable;
+    #    InventTableModule                               inventTableModule;
+    #    InventItemSetupSupplyType                       inventItemSetupSupplyType;
+    #    InventModelGroupItem                            inventModelGroupItem;
+    #    InventItemGroupItem                             inventItemGroupItem;
+    #    NumberSequenceTable                             numberSequenceTable;
+    #    EcoResProductTranslation                        ecoResProductTranslation;
+    #
+    #    EcoResProduct                                   ecoResProduct;
+    #    EcoResStorageDimensionGroupProduct              ecoResStorageDimensionGroupProduct;
+    #    EcoResTrackingDimensionGroupProduct             ecoResTrackingDimensionGroupProduct;
+    #    EcoResStorageDimensionGroupItem                 ecoResStorageDimensionGroupItem;
+    #    EcoResTrackingDimensionGroupItem                ecoResTrackingDimensionGroupItem;
+    #    DataAreaId                                      _dataAreaId=curext();
+    #
+    #    ItemId                                                  itemId;
+    #    EcoResEcoResProduct_Product_Distinct                    ProdDist;
+    #    EcoResEcoResProduct_translation                         translation;
+    #    EcoResEcoResProduct_Identifier                          identifier;
+    #
+    #    EcoResEcoResProduct_ProductDimGroup                     prodDimGroup;
+    #    EcoResEcoResProduct_StorageDimGroup                     storDimGroup;
+    #    EcoResEcoResProduct_TrackingDimGroup                    tracDimGroup;
+    #
+    #    EcoResProductService                                    ecoresPRoductService;
+    #
+    #    EcoResProductSearchName                                 prodnumber;
+    #
+    #
+    #    CommaIo                                                 file;
+    #
+    #    container                                               readCon;
+    #
+    #    Dialog                                                  d;
+    #
+    #    DialogField                                             df1, df2;
+    #
+    #    EcoResProductDisplayProductNumber                       ProductDisplayProductNumber;
+    #
+    #
+    #
+    #    // Create a comma separated file as input with col1 = product and col2 = description
+    #
+    #    ;
+    #
+    #    d = new Dialog("Import items");
+    #
+    #    df1 = d.addField(ExtendedTypeStr("FilenameOpen"));
+    #
+    #    ecoresPRoductService=EcoResProductService::construct();
+    #
+    #    ecoResEcoResProduct= new EcoResEcoResProduct();
+    #
+    #    if (d.run())
+    #
+    #    {
+    #
+    #        file = new CommaIo(df1.value(), 'r');
+    #
+    #        file.inFieldDelimiter(',');
+    #
+    #        readCon = file.read();//read first row - the headers row
+    #        readCon = file.read();//read second row - this has the values
+    #
+    #        while (readCon != conNull())
+    #
+    #        {
+    #            ecoResEcoResProduct= new EcoResEcoResProduct();
+    #
+    #            ProdDist = new EcoResEcoResProduct_Product_Distinct();
+    #
+    #            ProdDist.parmDisplayProductNumber(strLRTrim(conPeek(readCon,1)));
+    #
+    #            ProdDist.parmProductType(EcoResProductType::Item);
+    #
+    #            ProdDist.parmSearchName(strLRTrim(conPeek(readCon,2)));
+    #
+    #
+    #
+    #            // Create the translation object
+    #
+    #            translation = ProdDist.createTranslation().addNew();
+    #
+    #            translation.parmDescription(strLRTrim(conPeek(readCon,2)));
+    #
+    #            translation.parmAdditionalDescription(strLRTrim(conPeek(readCon,7)));
+    #
+    #            //ecoResProductTranslation.AdditionalDescription = conPeek(readCon,7);
+    #
+    #            translation.parmLanguageId("en-us");
+    #
+    #            translation.parmName(strLRTrim(conPeek(readCon,1)));
+    #
+    #
+    #
+    #            // Create the identifier object
+    #
+    #            Identifier = ProdDist.createIdentifier().addNew();
+    #
+    #            identifier.parmProductNumber(strLRTrim(conPeek(readCon,1)));
+    #
+    #            prodnumber = conPeek(readCon,1);
+    #
+    #
+    #
+    #            // Create the StorageDimgroup object
+    #
+    #            storDimGroup = ProdDist.createStorageDimGroup().addNew();
+    #
+    #            storDimGroup.parmProduct(strLRTrim(conPeek(readCon,1)));
+    #
+    #            storDimGroup.parmStorageDimensionGroup(strLRTrim(conPeek(readCon,3)));
+    #
+    #
+    #
+    #            // Create the TrackingDimGroup object
+    #
+    #            tracDimGroup = ProdDist.createTrackingDimGroup().addNew();
+    #
+    #            tracDimGroup.parmProduct(strLRTrim(conPeek(readCon,1)));
+    #
+    #            tracDimGroup.parmTrackingDimensionGroup(strLRTrim(conPeek(readCon,4)));
+    #
+    #
+    #
+    #
+    #
+    #            if(ecoResEcoResProduct.existsProduct())
+    #
+    #            {
+    #
+    #                ecoResEcoResProduct.parmProduct().add(ProdDist);
+    #
+    #            }
+    #
+    #            else
+    #
+    #            {
+    #
+    #                ecoResEcoResProduct.createProduct().add(ProdDist);
+    #
+    #            }
+    #
+    #            ecoresPRoductService.create(ecoResEcoResProduct);
+    #
+    #            select firstOnly ecoResProduct where EcoResProduct.DisplayProductNumber == prodnumber;
+    #            if (!numberSequenceTable.RecId || numberSequenceTable.Manual)
+    #            {
+    #                itemId = ecoResProduct.productNumber();
+    #            }
+    #            else //number sequence auto, get a number
+    #            {
+    #                itemId = NumberSeq::newGetNumFromId(numberSequenceTable.RecId).num();
+    #            }
+    #            inventTable.clear();
+    #            inventTable.initValue();
+    #            inventTable.initFromEcoResProduct(ecoResProduct);
+    #            inventTable.ItemId = ItemId;
+    #            inventTable.NameAlias = ecoResProduct.SearchName;
+    #            inventTable.insert(true);
+    #
+    #        // Create inventTableModules
+    #            inventTableModule.clear();
+    #            inventTableModule.initValue();
+    #            inventTableModule.ItemId = inventTable.ItemId;
+    #            inventTableModule.ModuleType = ModuleInventPurchSales::Invent;
+    #            inventTableModule.insert();
+    #
+    #            inventTableModule.clear();
+    #            inventTableModule.initValue();
+    #            inventTableModule.ItemId = inventTable.ItemId;
+    #            inventTableModule.ModuleType = ModuleInventPurchSales::Purch;
+    #            inventTableModule.Price = conPeek(readCon,5);
+    #            inventTableModule.insert();
+    #
+    #            inventTableModule.clear();
+    #            inventTableModule.initValue();
+    #            inventTableModule.ItemId = inventTable.ItemId;
+    #            inventTableModule.ModuleType = ModuleInventPurchSales::Sales;
+    #            inventTableModule.Price = conPeek(readCon,6);
+    #            inventTableModule.insert();
+    #
+    #        //Inventory model group
+    #            inventModelGroupItem.clear();
+    #            inventModelGroupItem.initValue();
+    #            inventModelGroupItem.ItemDataAreaId = inventTable.dataAreaId;
+    #            inventModelGroupItem.ItemId         = inventTable.ItemId;
+    #            inventModelGroupItem.ModelGroupId   = "FIFO";
+    #            inventModelGroupItem.ModelGroupDataAreaId = curext();
+    #            inventModelGroupItem.insert();
+    #
+    #        //Item group
+    #            inventItemGroupItem.clear();
+    #            inventItemGroupItem.initValue();
+    #            inventItemGroupItem.ItemDataAreaId = inventTable.dataAreaId;
+    #            inventItemGroupItem.ItemId         = inventTable.ItemId;
+    #            inventItemGroupItem.ItemGroupId    = "Sevices";
+    #            inventItemGroupItem.ItemGroupDataAreaId = curext();
+    #            inventItemGroupItem.insert();
+    #
+    #        //Create inventItemLocation
+    #            InventItemLocation::createDefault(inventTable.ItemId);
+    #
+    #        // Creates a new item default order type for the product that is released.
+    #            inventItemSetupSupplyType.clear();
+    #            inventItemSetupSupplyType.initValue();
+    #            inventItemSetupSupplyType.ItemId = inventTable.ItemId;
+    #            inventItemSetupSupplyType.ItemDataAreaId = inventTable.DataAreaId;
+    #            inventItemSetupSupplyType.insert();
+    #
+    #        //create relationship tables to dimension groups.
+    #            ecoResStorageDimensionGroupProduct  = EcoResStorageDimensionGroupProduct::findByProduct(ecoResProduct.RecId);
+    #            ecoResTrackingDimensionGroupProduct = EcoResTrackingDimensionGroupProduct::findByProduct(ecoResProduct.RecId);
+    #
+    #        // mandatory storage dimension group for the product
+    #            if (ecoResStorageDimensionGroupProduct.RecId)
+    #            {
+    #                ecoResStorageDimensionGroupItem.clear();
+    #                ecoResStorageDimensionGroupItem.ItemDataAreaId = inventTable.DataAreaId;
+    #                ecoResStorageDimensionGroupItem.ItemId = inventTable.ItemId;
+    #                ecoResStorageDimensionGroupItem.StorageDimensionGroup = ecoResStorageDimensionGroupProduct.StorageDimensionGroup;
+    #                ecoResStorageDimensionGroupItem.insert();
+    #            }
+    #         // mandatory tracking dimension group for the product
+    #            if (ecoResTrackingDimensionGroupProduct.RecId)
+    #            {
+    #                ecoResTrackingDimensionGroupItem.clear();
+    #                ecoResTrackingDimensionGroupItem.ItemDataAreaId = inventTable.DataAreaId;
+    #                ecoResTrackingDimensionGroupItem.ItemId = inventTable.ItemId;
+    #                ecoResTrackingDimensionGroupItem.TrackingDimensionGroup = ecoResTrackingDimensionGroupProduct.TrackingDimensionGroup;
+    #                ecoResTrackingDimensionGroupItem.insert();
+    #            }
+    #            info(strfmt("Product successfully released to USMF legal entity"));
+    #            readCon = file.read(); //read the next row.
+    #
+    #
+    #        }
+    #
+    #
+    #
+    #
+    #        //EcoResProductReleaseManagerBase::releaseProduct(ecoResProduct.RecId,CompanyInfo::findDataArea('USMF').RecId);
+    #
+    #    }
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{E7EB58FB-5876-4615-888B-0C620F253C6B}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Create_Product unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Create_Product
+    #public void Create_Product(ItemId _itemid,ItemName _itemname,Name _searchname,Name _name,ProductType _ProductType)
+    #{
+    #  //Classes
+    #    EcoResProductService                            ecoResProdService;
+    #    EcoResEcoResProduct                             ecoResEcoResProduct;
+    #    EcoResEcoResProduct_Product_Distinct            ecoResEcoResProduct_Product_Distinct;
+    #    EcoResEcoResProduct_Translation                 ecoResEcoResProduct_Translation;
+    #    EcoResEcoResProduct_Identifier                  ecoResEcoResProduct_Identifier;
+    #
+    # //Tables
+    #    InventTable                                     inventTable;
+    #    InventTableModule                               inventTableModule;
+    #    InventItemSetupSupplyType                       inventItemSetupSupplyType;
+    #    InventModelGroupItem                            inventModelGroupItem;
+    #    InventItemGroupItem                             inventItemGroupItem;
+    #    NumberSequenceTable                             numberSequenceTable;
+    #
+    #    EcoResProduct                                   ecoResProduct;
+    #    EcoResStorageDimensionGroupProduct              ecoResStorageDimensionGroupProduct;
+    #    EcoResTrackingDimensionGroupProduct             ecoResTrackingDimensionGroupProduct;
+    #    EcoResStorageDimensionGroupItem                 ecoResStorageDimensionGroupItem;
+    #    EcoResTrackingDimensionGroupItem                ecoResTrackingDimensionGroupItem;
+    #    DataAreaId                                      _dataAreaId=curext();
+    #
+    # //Object Creating Class
+    #    ecoResProdService                       = EcoResProductService::construct();
+    #    ecoResEcoResProduct                     = new EcoResEcoResProduct();
+    #    ecoResEcoResProduct_Product_Distinct    = new EcoResEcoResProduct_Product_Distinct();
+    #
+    #//Newly created and initialize product
+    #    ecoResEcoResProduct_Product_Distinct.parmDisplayProductNumber(_itemid);
+    #    ecoResEcoResProduct_Product_Distinct.parmProductType(EcoResProductType::Item);
+    #    ecoResEcoResProduct_Product_Distinct.parmSearchName(_searchname);
+    #
+    #//Create a new translation object:
+    #    ecoResEcoResProduct_Translation = ecoResEcoResProduct_Product_Distinct.createTranslation().addNew();
+    #    ecoResEcoResProduct_Translation.parmDescription(_searchname);
+    #    ecoResEcoResProduct_Translation.parmLanguageId(CompanyInfo::languageId());
+    #    ecoResEcoResProduct_Translation.parmName(_itemname);
+    #
+    #//Create a new Identifier object:
+    #    ecoResEcoResProduct_Identifier = ecoResEcoResProduct_Product_Distinct.createIdentifier().addNew();
+    #    ecoResEcoResProduct_Identifier.parmProductNumber(_itemid);
+    #
+    #//Assign Product Class to table
+    #    ecoResEcoResProduct.createProduct().add(ecoResEcoResProduct_Product_Distinct);
+    #    ecoResProdService.create(ecoResEcoResProduct);
+    #    info("Product is Creted");
+    #
+    # //Realsed Product
+    #    select firstOnly ecoResProduct where EcoResProduct.DisplayProductNumber == _itemid;
+    #
+    #//Storage dimension group
+    #    ecoResStorageDimensionGroupProduct.clear();
+    #    ecoResStorageDimensionGroupProduct.initValue();
+    #    ecoResStorageDimensionGroupProduct.Product               = ecoResProduct.RecId;
+    #    ecoResStorageDimensionGroupProduct.StorageDimensionGroup = EcoResStorageDimensionGroup::findByDimensionGroupName("Site").RecId;
+    #    if (ecoResStorageDimensionGroupProduct.validateWrite())
+    #    {
+    #        ecoResStorageDimensionGroupProduct.insert();
+    #    }
+    #
+    # //Tracking dimension group
+    #    ecoResTrackingDimensionGroupProduct.clear();
+    #    ecoResTrackingDimensionGroupProduct.initValue();
+    #    ecoResTrackingDimensionGroupProduct.Product                = ecoResProduct.RecId;
+    #    ecoResTrackingDimensionGroupProduct.TrackingDimensionGroup = EcoResTrackingDimensionGroup::findByDimensionGroupName("Serial").RecId;
+    #    if (ecoResTrackingDimensionGroupProduct.validateWrite())
+    #    {
+    #        ecoResTrackingDimensionGroupProduct.insert();
+    #    }
+    #
+    #
+    #    if (!numberSequenceTable.RecId || numberSequenceTable.Manual)
+    #    {
+    #        itemId = ecoResProduct.productNumber();
+    #    }
+    #    else //number sequence auto, get a number
+    #    {
+    #        itemId = NumberSeq::newGetNumFromId(numberSequenceTable.RecId).num();
+    #    }
+    #    inventTable.clear();
+    #    inventTable.initValue();
+    #    inventTable.initFromEcoResProduct(ecoResProduct);
+    #    inventTable.ItemId = ItemId;
+    #    inventTable.NameAlias = ecoResProduct.SearchName;
+    #    inventTable.insert(true);
+    #
+    #// Create inventTableModules
+    #    inventTableModule.clear();
+    #    inventTableModule.initValue();
+    #    inventTableModule.ItemId = inventTable.ItemId;
+    #    inventTableModule.ModuleType = ModuleInventPurchSales::Invent;
+    #    inventTableModule.insert();
+    #
+    #    inventTableModule.clear();
+    #    inventTableModule.initValue();
+    #    inventTableModule.ItemId = inventTable.ItemId;
+    #    inventTableModule.ModuleType = ModuleInventPurchSales::Purch;
+    #    inventTableModule.insert();
+    #
+    #    inventTableModule.clear();
+    #    inventTableModule.initValue();
+    #    inventTableModule.ItemId = inventTable.ItemId;
+    #    inventTableModule.ModuleType = ModuleInventPurchSales::Sales;
+    #    inventTableModule.insert();
+    #
+    #//Inventory model group
+    #    inventModelGroupItem.clear();
+    #    inventModelGroupItem.initValue();
+    #    inventModelGroupItem.ItemDataAreaId = inventTable.dataAreaId;
+    #    inventModelGroupItem.ItemId         = inventTable.ItemId;
+    #    inventModelGroupItem.ModelGroupId   = "FIFO";
+    #    inventModelGroupItem.ModelGroupDataAreaId = curext();
+    #    inventModelGroupItem.insert();
+    #
+    #//Item group
+    #    inventItemGroupItem.clear();
+    #    inventItemGroupItem.initValue();
+    #    inventItemGroupItem.ItemDataAreaId = inventTable.dataAreaId;
+    #    inventItemGroupItem.ItemId         = inventTable.ItemId;
+    #    inventItemGroupItem.ItemGroupId    = "Sevices";
+    #    inventItemGroupItem.ItemGroupDataAreaId = curext();
+    #    inventItemGroupItem.insert();
+    #
+    #//Create inventItemLocation
+    #    InventItemLocation::createDefault(inventTable.ItemId);
+    #
+    #// Creates a new item default order type for the product that is released.
+    #    inventItemSetupSupplyType.clear();
+    #    inventItemSetupSupplyType.initValue();
+    #    inventItemSetupSupplyType.ItemId = inventTable.ItemId;
+    #    inventItemSetupSupplyType.ItemDataAreaId = inventTable.DataAreaId;
+    #    inventItemSetupSupplyType.insert();
+    #
+    #//create relationship tables to dimension groups.
+    #    ecoResStorageDimensionGroupProduct  = EcoResStorageDimensionGroupProduct::findByProduct(ecoResProduct.RecId);
+    #    ecoResTrackingDimensionGroupProduct = EcoResTrackingDimensionGroupProduct::findByProduct(ecoResProduct.RecId);
+    #
+    #// mandatory storage dimension group for the product
+    #    if (ecoResStorageDimensionGroupProduct.RecId)
+    #    {
+    #        ecoResStorageDimensionGroupItem.clear();
+    #        ecoResStorageDimensionGroupItem.ItemDataAreaId = inventTable.DataAreaId;
+    #        ecoResStorageDimensionGroupItem.ItemId = inventTable.ItemId;
+    #        ecoResStorageDimensionGroupItem.StorageDimensionGroup = ecoResStorageDimensionGroupProduct.StorageDimensionGroup;
+    #        ecoResStorageDimensionGroupItem.insert();
+    #    }
+    # // mandatory tracking dimension group for the product
+    #    if (ecoResTrackingDimensionGroupProduct.RecId)
+    #    {
+    #        ecoResTrackingDimensionGroupItem.clear();
+    #        ecoResTrackingDimensionGroupItem.ItemDataAreaId = inventTable.DataAreaId;
+    #        ecoResTrackingDimensionGroupItem.ItemId = inventTable.ItemId;
+    #        ecoResTrackingDimensionGroupItem.TrackingDimensionGroup = ecoResTrackingDimensionGroupProduct.TrackingDimensionGroup;
+    #        ecoResTrackingDimensionGroupItem.insert();
+    #    }
+    #    info(strfmt("Product successfully released to UsMf legal entity"));
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{C368541B-3059-4EDF-86D1-11EB58FE38EF}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: InsertProductAXD365 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #InsertProductAXD365
+    #static void InsertProductAXD365(Args _args)
+    #{
+    #    EcoResProductEntity                        ecoResProductEntity;
+    #
+    #    EcoResProductEntityToCrossTableDataAdaptor adaptor;
+    #    EcoResProduct                              product;
+    #
+    #    NumberSequenceReference                    numberSequenceReference = EcoResProductParameters::numRefProductNumber();
+    #    NumberSequenceTable                        numberSequenceTable = numberSequenceReference.numberSequenceTable();
+    #
+    #    Args                                       args;
+    #
+    #    NumberSeq                                  numberSeq = NumberSeq::newGetNumFromId(numberSequenceTable.RecId);
+    #
+    #    EcoResProductReleaseSessionManager         productReleaseSessionManager;
+    #    EcoResReleaseSessionRecId                  releaseSessionRecId;
+    #
+    #    CompanyInfo                                companyInfo = CompanyInfo::find();
+    #
+    #
+    #    ecoResProductEntity.ProductNumber                   = numberSeq.num();
+    #    ecoResProductEntity.ProductSearchName               = "myItem";
+    #    ecoResProductEntity.ProductName                     = "My Item";
+    #    ecoResProductEntity.ProductType                     = EcoResProductType::Item;
+    #    ecoResProductEntity.ProductSubType                  = EcoResProductSubtype::ProductMaster;
+    #    ecoResProductEntity.VariantConfigurationTechnology  = EcoResVariantConfigurationTechnologyType::PredefinedVariants;
+    #    ecoResProductEntity.ProductDimensionGroupName       = "Prod_Dim";
+    #
+    #    // here you can set all the fields of the data entity that you need
+    #
+    #    adaptor = EcoResProductEntityToCrossTableDataAdaptor::newFromEntity(ecoResProductEntity);
+    #
+    #    ttsbegin;
+    #
+    #    product = EcoResProductCrossTableManager::makeProductRecord(adaptor);
+    #
+    #    EcoResProductCrossTableManager::insert(adaptor, product);
+    #    // here you can create one or more translations
+    #    EcoResProductTranslation::createOrUpdateTranslation(product.RecId, "it translation", '', "it");
+    #
+    #    // now we want to release that master product for the current company
+    #    productReleaseSessionManager    = EcoResProductReleaseSessionManager::newReleaseSession();
+    #    releaseSessionRecId             = productReleaseSessionManager.parmReleaseSessionRecId();
+    #
+    #    productReleaseSessionManager.addProduct(product.RecId);
+    #    productReleaseSessionManager.addLegalEntityForProduct(companyInfo.RecId, product.RecId);
+    #
+    #    args = new Args(formStr(EcoResProductRelease));
+    #    args.record(EcoResReleaseSession::find(releaseSessionRecId));
+    #
+    #    // the first boolean parameter is for showing a log for errors
+    #    // the second boolean parameter is for executing the release with a batch
+    #    if (EcoResProductReleaseSessionBatch::runJob(args, true, false))
+    #        {
+    #            productReleaseSessionManager.cleanUp();
+    #        }
+    #
+    #    ttscommit;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{1CCAEF06-0CE1-4850-9EE8-4A2FCF4675EC}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: InsertVendor unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #InsertVendor
+    #static void InsertVendor(Args _args)
+    #{
+    #        VendTable                       vendtable;
+    #        AccountNum                      accountNum = 'Alex10';
+    #        VendGroupId                     vendGroupId = '10';
+    #        Name                            name = 'ABC';
+    #        DirParty                        dirParty;
+    #        DirPartyPostalAddressView       dirPartyPostalAddressView;
+    #        CustTable                       CustTable;
+    #        DirPartyType                    partytype;
+    #        DirPartyTable                   dirpartytable;
+    #        DirPersonName                   dirpersonname;
+    #
+    #        Vendtable    = Vendtable::find(accountNum);
+    #
+    #        if(!vendtable)    // if vendor not exits
+    #           {
+    #                ttsBegin;
+    #
+    #                vendtable.clear();
+    #                vendtable.initValue();
+    #
+    #                vendtable.AccountNum = accountNum;
+    #                vendtable.VendGroup = vendGroupId;
+    #                vendtable.insert();
+    #
+    #
+    #                dirParty = DirParty::constructFromCommon(vendtable);
+    #
+    #                dirPartyPostalAddressView.LocationName = 'ABC-AUTO';
+    #                dirPartyPostalAddressView.City = 'London';
+    #                dirPartyPostalAddressView.Street = 'Dover Street';
+    #                dirPartyPostalAddressView.StreetNumber = '123';
+    #                dirPartyPostalAddressView.CountryRegionId = 'GBR';
+    #
+    #                dirParty.createOrUpdatePostalAddress(dirPartyPostalAddressView);
+    #
+    #                ttsCommit;
+    #           }
+    #
+    #    else                    // if vendor exits updates the address of the Vendor
+    #        {
+    #           ttsBegin;
+    #
+    #          dirParty = DirParty::constructFromCommon(vendtable);
+    #
+    #          dirPartyPostalAddressView.LocationName = 'ABC-AUTO';
+    #          dirPartyPostalAddressView.City = 'Germany';
+    #          dirPartyPostalAddressView.Street = 'Germany Street';
+    #          dirPartyPostalAddressView.StreetNumber = '123';
+    #          dirPartyPostalAddressView.CountryRegionId = 'GBR';
+    #          dirPartyPostalAddressView.IsPrimary=1;
+    #          dirParty.createOrUpdatePostalAddress(dirPartyPostalAddressView);
+    #
+    #           ttsCommit;
+    #        }
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{26DF8618-E9CA-4C77-8D03-EBF586E5E680}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: InsertCustomer unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #InsertCustomer
+    #// Create a new Job
+    #static void InsertCustomer(Args _args)
+    #{
+    #    CustTable                    custTable;
+    #    NumberSeq                    numberSeq;
+    #    Name                         name ='SouthSide Street LTDA';
+    #
+    #    DirParty                        dirParty;
+    #    DirPartyPostalAddressView       dirPartyPostalAddressView;
+    #    DirPartyContactInfoView         dirPartyContactInfo;
+    #    ;
+    #
+    #    /* Marks the beginning of a transaction.
+    #       Necessary to utilize the method numRefCustAccount() */
+    #    ttsBegin;
+    #    custTable.initValue();
+    #
+    #
+    #       //CustTable
+    #        //numberSeq               = NumberSeq::newGetNum(CustParameters::numRefCustAccount());
+    #        //custTable.AccountNum    = numberSeq.num();
+    #        custTable.CustGroup     ='020';
+    #        custTable.Currency      ='BRL';
+    #        custTable.PaymTermId    ='10DD';
+    #        custTable.PaymMode      ='CHEQUE-01';
+    #
+    #        custTable.insert(DirPartyType::Organization, name);
+    #
+    #        //DirParty
+    #
+    #        /* Creates a new instance of the DirParty class from an address book entity
+    #           that is represented by the custTable parameter. */
+    #        dirParty = DirParty::constructFromCommon(custTable);
+    #
+    #        dirPartyPostalAddressView.LocationName      ='HeadQuarters ';
+    #        dirPartyPostalAddressView.City              ='São Paulo';
+    #        dirPartyPostalAddressView.Street            ='4th Avenue';
+    #        dirPartyPostalAddressView.StreetNumber      ='18';
+    #        dirPartyPostalAddressView.CountryRegionId   ='BRA';
+    #        dirPartyPostalAddressView.State             ='SP';
+    #
+    #        // Fill address
+    #        dirParty.createOrUpdatePostalAddress(dirPartyPostalAddressView);
+    #
+    #        dirPartyContactInfo.LocationName    ='SouthStreet Contact Phone';
+    #        dirPartyContactInfo.Locator         ='551291165341';
+    #        dirPartyContactInfo.Type            = LogisticsElectronicAddressMethodType::Phone;
+    #        dirPartyContactInfo.IsPrimary       = NoYes::Yes;
+    #
+    #        // Fill Contacts
+    #        dirParty.createOrUpdateContactInfo(dirPartyContactInfo);
+    #
+    #        // Marks the end of transaction.
+    #        ttsCommit;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{D4BFA2E5-9E34-4C2F-AD5F-CC2669C08A9F}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: UpdateVetSpeciesTable unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #UpdateVetSpeciesTable
+    #static void UpdateVetSpeciesTable(Args _args)
+    #{
+    #    VetSpeciesTable             vetSpeciesTable;
+    #
+    #    ttsBegin;
+    #
+    #    select forUpdate vetSpeciesTable
+    #        where vetSpeciesTable.SpeciesId == "Fsh";
+    #
+    #    vetSpeciesTable.Name = "Fiish";
+    #
+    #    vetSpeciesTable.update();
+    #
+    #    ttsCommit;
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{90F2ED2A-AEFF-40EB-96A2-CCAFBD8389D8}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: InsertIntoVetSpeciesTable unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #InsertIntoVetSpeciesTable
+    #static void InsertIntoVetSpeciesTable(Args _args)
+    #{
+    #    VetSpeciesTable             vetSpeciesTable;
+    #
+    #    vetSpeciesTable.initValue();
+    #
+    #    vetSpeciesTable.Name = "Fish";
+    #    vetSpeciesTable.SpeciesId = "Fsh";
+    #
+    #    if (vetSpeciesTable.validateWrite())
+    #        vetSpeciesTable.insert();
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{E630EC10-358B-49D4-AFA5-8F2A25E6678F}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: HowManyDeliveriesWereMadeIn2012 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #HowManyDeliveriesWereMadeIn2012
+    #static void HowManyDeliveriesWereMadeIn2012(Args _args)
+    #{
+    #    CustPackingSlipJour         custPackingSlipJour;
+    #    int                         y;
+    #    date                        startofyear;
+    #    date                        endofyear;
+    #
+    #    startofyear = str2Date("1/1/2012", 123);
+    #    endofyear = str2Date("31/12/2012", 123);
+    #
+    #    select count(SalesId) from custPackingSlipJour
+    #            where custPackingSlipJour.DeliveryDate >= startofyear
+    #            &&    custPackingSlipJour.DeliveryDate <= endofyear;
+    #
+    #    y = str2int(custPackingSlipJour.SalesId);
+    #
+    #    info(strFmt("There were %1 deliveries made in 2012", y));
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{3078F890-D405-4303-AE4F-814DE74BBCE3}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: HowManySalesWithMoreThan1Invoice unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #HowManySalesWithMoreThan1Invoice
+    #static void HowManySalesWithMoreThan1Invoice(Args _args)
+    #{
+    #    SalesTable              salesTable;
+    #    CustInvoiceJour         custInvoiceJour;
+    #    int                     x;
+    #    int                     y;
+    #
+    #    x = 0;
+    #
+    #    while select SalesId from salesTable
+    #       // salesTable.SalesStatus == SalesStatus::Invoiced
+    #    {
+    #        select count(SalesId) from custInvoiceJour
+    #            where custInvoiceJour.SalesId == salesTable.SalesId;
+    #
+    #        y = str2int(custInvoiceJour.SalesId);
+    #
+    #        if (y > 1)
+    #        {
+    #            x++;
+    #        }
+    #    }
+    #
+    #    info(strFmt("There are %1 sales with more than 1 invoice", x));
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{10849DD8-6157-4EF9-8382-47E91C79AFA9}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: HowManySalesWithMoreThan1Delivery unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #HowManySalesWithMoreThan1Delivery
+    #static void HowManySalesWithMoreThan1Delivery(Args _args)
+    #{
+    #    SalesTable              salesTable;
+    #    CustPackingSlipJour     custPackingSlipJour;
+    #    int                     x;
+    #    int                     y;
+    #
+    #    x = 0;
+    #
+    #    while select SalesId from salesTable
+    #        where salesTable.SalesStatus == SalesStatus::Delivered || salesTable.SalesStatus == SalesStatus::Invoiced
+    #    {
+    #        select count(SalesId) from custPackingSlipJour
+    #            where custPackingSlipJour.SalesId == salesTable.SalesId;
+    #
+    #        y = str2int(custPackingSlipJour.SalesId);
+    #
+    #        if (y > 1)
+    #        {
+    #            x++;
+    #        }
+    #    }
+    #
+    #    info(strFmt("There are %1 sales with more than 1 delivery", x));
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{FE8C431E-8918-41B2-99D4-D28D76A0530A}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: NumberOfSoldItemsPerStatus unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #NumberOfSoldItemsPerStatus
+    #static void NumberOfSoldItemsPerStatus(Args _args)
+    #{
+    #    SalesLine salesLine;
+    #    int OpenOrder;
+    #    int Invoiced;
+    #    int Delivered;
+    #    OpenOrder = 0;
+    #    Invoiced = 0;
+    #    Delivered = 0;
+    #
+    #    while select SalesStatus from salesLine
+    #    {
+    #        if (salesLine.SalesStatus == SalesStatus::Backorder)
+    #        {
+    #            OpenOrder++;
+    #        }
+    #
+    #        else if (salesLine.SalesStatus == SalesStatus::Invoiced)
+    #        {
+    #            Invoiced++;
+    #        }
+    #
+    #        else if (salesLine.SalesStatus == SalesStatus::Delivered)
+    #        {
+    #            Delivered++;
+    #        }
+    #    }
+    #
+    #    info(strFmt("The number of sales with Open Order status is %1",OpenOrder));
+    #    info(strFmt("The number of sales with Invoiced status is %1",Invoiced));
+    #    info(strFmt("The number of sales with Delivered status is %1",Delivered));
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{79B85311-790F-40E4-944C-BFBD924BFC14}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MostSoldOutItemByQuantity unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MostSoldOutItemByQuantity
+    #static void MostSoldOutItemByQuantity(Args _args)
+    #{
+    #    InventTable             inventTable;
+    #    SalesLine               salesLine;
+    #    SalesTable              salesTable;
+    #    SalesOrderedQty         x;
+    #    SalesOrderedQty         i;
+    #    ItemIdSmall             y;
+    #
+    #
+    #
+    #    i = 0;
+    #
+    #    while select ItemId from inventTable
+    #        where inventTable.ItemId == "D0003"
+    #    {
+    #        select sum(SalesQty) from salesLine
+    #            where salesLine.ItemId == InventTable.ItemId;
+    #
+    #        x = salesLine.SalesQty;
+    #
+    #        if (i < x)
+    #        {
+    #            i = x;
+    #            y = InventTable.ItemId;
+    #        }
+    #    }
+    #
+    #    info(strFmt("%1 has sold %2 units and is the most sould out item by quantity",y,i));
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{F0167337-85A4-484F-BBF8-2A75A4E7CFE6}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Top5CustomersWithMostSales unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Top5CustomersWithMostSales
+    #static void Top5CustomersWithMostSales(Args _args)
+    #{
+    #    SalesLine   salesLine;
+    #    CustTable   custTable;
+    #    SalesLineAmount x;
+    #    SalesLineAmount first;
+    #    SalesLineAmount second;
+    #    SalesLineAmount third;
+    #    SalesLineAmount fourth;
+    #    SalesLineAmount fifth;
+    #    CustAccount y;
+    #    CustAccount firstcust;
+    #    CustAccount secondcust;
+    #    CustAccount thirdcurst;
+    #    CustAccount fourthcust;
+    #    CustAccount fifthcust;
+    #
+    #    while select AccountNum from custTable
+    #    {
+    #        select sum(LineAmount) from salesLine
+    #            where salesLine.CustAccount == custTable.AccountNum;
+    #
+    #        x = salesLine.LineAmount;
+    #        y =  custTable.AccountNum;
+    #
+    #        if (x > first)
+    #        {
+    #            fifth = fourth;
+    #            fifthcust = fourthcust;
+    #            fourth = third;
+    #            fourthcust = thirdcurst;
+    #            third = second;
+    #            thirdcurst = secondcust;
+    #            second = first;
+    #            secondcust = firstcust;
+    #            first = x;
+    #            firstcust = y;
+    #        }
+    #
+    #        else if (x > second)
+    #        {
+    #            fifth = fourth;
+    #            fifthcust = fourthcust;
+    #            fourth = third;
+    #            fourthcust = thirdcurst;
+    #            third = second;
+    #            thirdcurst = secondcust;
+    #            second = x;
+    #            secondcust = y;
+    #        }
+    #
+    #        else if (x > third)
+    #        {
+    #            fifth = fourth;
+    #            fifthcust = fourthcust;
+    #            fourth = third;
+    #            fourthcust = thirdcurst;
+    #            third = x;
+    #            thirdcurst = y;
+    #        }
+    #
+    #        else if (x > fourth)
+    #        {
+    #            fifth = fourth;
+    #            fifthcust = fourthcust;
+    #            fourth = x;
+    #            fourthcust = y;
+    #        }
+    #
+    #        else if (x > fifth)
+    #        {
+    #            fifth = x;
+    #            fifthcust = y;
+    #        }
+    #
+    #    }
+    #    info(strFmt("%1, is the first customer with the most amount of sales, %2",firstcust, first));
+    #    info(strFmt("%1, is the second customer with the most amount of sales, %2",secondcust, second));
+    #    info(strFmt("%1, is the third customer with the most amount of sales, %2",thirdcurst, third));
+    #    info(strFmt("%1, is the fourth customer with the most amount of sales, %2",fourthcust, fourth));
+    #    info(strFmt("%1, is the first customer with the most amount of sales, %2",fifthcust, fifth));
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{7F7348EB-2BB0-47BC-BDE7-8761DCF3890A}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: CustomerWithMostSales unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #CustomerWithMostSales
+    #static void CustomerWithMostSales(Args _args)
+    #{
+    #    SalesLine               salesLine;
+    #    SalesTable              salesTable;
+    #    CustTable               custTable;
+    #    SalesLineAmount         x;
+    #    SalesLineAmount         i;
+    #    CustAccount             y;
+    #
+    #
+    #    i = 0;
+    #
+    #    while select AccountNum from custTable
+    #    {
+    #        select sum(LineAmount) from salesLine
+    #            where salesLine.CustAccount == custTable.AccountNum;
+    #
+    #        x = salesLine.LineAmount;
+    #
+    #        if (i < x)
+    #        {
+    #            i = x;
+    #            y = custTable.AccountNum;
+    #        }
+    #    }
+    #
+    #    info(strFmt("%1 is the customer with the most amount of sales, %2",y, i));
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{5BCCD1CE-B3D5-416E-ADB3-6CCF7586C1C1}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: ListOfVendors unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #ListOfVendors
+    #static void ListOfVendors(Args _args)
+    #{
+    #    Query                   query;
+    #    QueryRun                queryRun;
+    #    QueryBuildDataSource    qbds;
+    #    QueryBuildRange         qbr;
+    #    vendTable               vendTable;
+    #
+    #    query = new Query();
+    #    qbds = query.addDataSource(TableNum(VendTable));
+    #    qbr = qbds.addRange(FieldNum(VendTable,VendGroup));
+    #    qbr.value('50');
+    #    qbds.addSortField(FieldNum(VendTable,AccountNum));
+    #
+    #    queryRun = new QueryRun(query);
+    #
+    #    if (queryRun.prompt())
+    #    {
+    #        while (queryRun.next())
+    #        {
+    #            VendTable = queryRun.get(tableNum(VendTable));
+    #            info(VendTable.Name());
+    #        }
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{BCCE1127-6036-42A1-9B90-758263BDD641}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: ExampleQuery unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #ExampleQuery
+    #static void ExampleQuery(Args _args)
+    #{
+    #    Query                   query;
+    #    QueryRun                queryRun;
+    #    QueryBuildDataSource    qbds;
+    #    QueryBuildRange         qbr;
+    #    SalesTable              SalesTable;
+    #
+    #    query = new Query();
+    #
+    #    //this line attaches a table to the qbds data source object
+    #    qbds = query.addDataSource(TableNum (SalesTable));
+    #
+    #    //this line attaches a range to the 'SalesTable' //data source, the range is the CustAccount
+    #    qbr = qbds.addRange(FieldNum (SalesTable,CustAccount));
+    #
+    #    // The range is set to '2001'
+    #    qbr.value ('2001');
+    #
+    #    // The query will sort by sales id
+    #    qbds.addSortField (FieldNum(SalesTable,SalesId));
+    #
+    #    // The queryRun object is instantiated using the query
+    #    queryRun = new QueryRun(query);
+    #
+    #    // The queryRun object loops through all records returned
+    #    while (queryRun.next())
+    #    {
+    #        // The current record is assigned to the salesTable variable
+    #        SalesTable = queryRun.get(tableNum(SalesTable));
+    #
+    #        info(SalesTable.SalesId);
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{AA799F79-4851-4BDC-8153-DAF5BA2E6304}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: SetToleranceGrp2 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #SetToleranceGrp2
+    #static void SetToleranceGrp2(Args _args)
+    #{
+    #    InventTable inventTable;
+    #    InventItemGroupItem inventItemGroupItem;
+    #
+    #    ttsbegin;
+    #    while select forupdate InventTable
+    #    exists join inventItemGroupItem
+    #    where inventItemGroupItem.ItemId == InventTable.ItemId && inventItemGroupItem.ItemGroupId == 'Television'
+    #    {
+    #    InventTable.ItemPriceToleranceGroupId ="2%";
+    #    InventTable.update();
+    #    }
+    #    ttscommit;
+    #
+    #    ttsbegin;
+    #    while select forupdate InventTable
+    #    exists join inventItemGroupItem
+    #    where inventItemGroupItem.ItemId == InventTable.ItemId && inventItemGroupItem.ItemGroupId == 'Television'
+    #    {
+    #    InventTable.ItemPriceToleranceGroupId ="2%";
+    #    InventTable.update();
+    #    }
+    #    ttscommit;
+    #
+    #    ttsbegin;  while select forupdate InventTable
+    #    exists join inventItemGroupItem
+    #    where inventItemGroupItem.ItemId == InventTable.ItemId && inventItemGroupItem.ItemGroupId == 'Television'
+    #    {
+    #    InventTable.ItemPriceToleranceGroupId ="2%";
+    #    InventTable.update();
+    #    }
+    #    ttscommit;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{2A08E41B-C241-460F-9EF0-33A0977F5109}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: CustomerAcctNumsAndNames unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #CustomerAcctNumsAndNames
+    #static void CustomerAcctNumsAndNames(Args _args)
+    #{
+    #    CustTable       CustTable;
+    #    DirPartyTable DirPartyTable;
+    #    while select DirPartyTable order Name
+    #
+    #        join CustTable
+    #
+    #            where custTable.Party == dirPartyTable.RecId
+    #{
+    #    info(DirPartyTable.Name+', '+CustTable.AccountNum);
+    #}
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{C7E1F111-FED0-4A1B-8F97-831C016B65F1}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: PlayingWithTables unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #PlayingWithTables
+    #static void PlayingWithTables(Args _args)
+    #{
+    #//    CustTable   custTable;
+    #
+    #//    select custTable
+    #//        where custTable.AccountNum == "1103";
+    #
+    #//    print "This is the credit limit of Customer " + custTable.AccountNum + ": " + num2str(custTable.CreditMax,1,-1,-1,-1);
+    #
+    #//    pause;
+    #
+    #//    CustTable       custTable;
+    #
+    #//    while select AccountNum from custTable
+    #//    {
+    #
+    #//    info(strFmt(custTable.AccountNum));
+    #
+    #//    }
+    #
+    #    CustTable custTable;
+    #
+    #    while select custTable index AccountIdx
+    #    {
+    #
+    #        print custTable.AccountNum, " ", custTable.currency;
+    #
+    #    }
+    #
+    #    pause;
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{8B93DDEE-9697-4C94-9A5C-0355EC7CE92F}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: executeCalculator unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #executeCalculator
+    #static public void executeCalculator(Args _args)
+    #{
+    #    Calculator          Calculator;
+    #    Calculator = new Calculator();
+    #    Calculator.parmValue1(1);
+    #    Calculator.parmValue2(3);
+    #    print Calculator.add();
+    #    print Calculator.divide();
+    #    print Calculator.multiple();
+    #    print Calculator.substract();
+    #    pause;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{4EF1547A-FC63-46E3-A94F-D618D01EA91B}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: executePrintMyName unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #executePrintMyName
+    #static public void executePrintMyName(Args _args)
+    #{
+    #    PrintMyName         PrintMyName;
+    #
+    #    PrintMyName = new PrintMyName();
+    #
+    #    PrintMyName.run();
+    #    pause;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{46C4DBBC-DDAD-4EB6-99B9-0BFEFADE25AE}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: ControlStatements unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #ControlStatements
+    #static void ControlStatements(Args _args)
+    #{
+    #DialogButton    dialogButton;
+    #container       nameAndDOB;
+    #
+    #nameAndDOB = ["John","Doe",mkDate(28,9,71)];
+    #dialogButton = Box::yesNo("Do you want to see the birthdate?", DialogButton::Yes);
+    #
+    #if (dialogButton == DialogButton::Yes)
+    #{
+    #    Box::info(strFmt("%1 %2, %3", conPeek(nameAndDOB,1), conPeek(nameAndDOB,2), date2str(conPeek(nameAndDOB,3),-1,1,-1,-1,-1,-1)));
+    #}
+    #
+    #else
+    #{
+    #    Box::info(strFmt("%1 %2",conPeek(nameAndDOB,1), conPeek(nameAndDOB,2)));
+    #}
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{972D394C-A63D-4299-9B7D-1DF5131ABAC1}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: DialogBox unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #DialogBox
+    #static void DialogBox(Args _args)
+    #{
+    #Dialog      dialog;
+    #DialogGroup dialogGroup;
+    #DialogField dialogFieldCustAccount;
+    #DialogField dialogFieldSalesId;
+    #
+    #dialog = new Dialog("Simple Dialog");
+    #dialogGroup = dialog.addGroup("Customer");
+    #dialogFieldCustAccount = dialog.addField(extendedTypeStr(CustAccount));
+    #dialogFieldSalesId = dialog.addField(extendedTypeStr(SalesId));
+    #
+    #if(dialog.run())
+    #{
+    #    info(dialogFieldCustAccount.value());
+    #    info(dialogFieldSalesId.value());
+    #}
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{7493FC66-84DD-422B-9718-1A0AD05B7759}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: InfologTree unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #InfologTree
+    #static void InfologTree(Args _args)
+    #{
+    #setPrefix("This is the Infolog Tree lab");
+    #info("Info message");
+    #warning("Warning message");
+    #error("Error message");
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{DDBB2906-C9D3-4033-B698-6A44A429873D}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: YesNoBox unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #YesNoBox
+    #static void YesNoBox(Args _args)
+    #{
+    #DialogButton dialogButton;
+    #
+    #dialogButton = Box::yesNoCancel("Do you want to continue?",
+    #DialogButton::Yes, "Question", "Bottom help text");
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{8CE0B6BF-83F2-4435-9752-D365ADE89F3B}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MultiplicationTable unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MultiplicationTable
+    #static void MultiplicationTable(Args _args)
+    #{
+    #int counter = 1;
+    #
+    #do
+    #{
+    #    print counter * 2;
+    #    counter++;
+    #}
+    #
+    # while(counter <= 25);
+    #
+    # pause;
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{0EF86503-8CDB-44C4-8DC7-4F27D6D2D196}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: PrintJob unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #PrintJob
+    #static void PrintJob(Args _args)
+    #{
+    #// ToDo Write some code and check the naming conventions for jobs
+    #    info("Microsoft Dynamics AX is fantastic.");
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{523C40B7-A0FC-44CF-91B9-E5A592767D72}
+  ENDPROPERTIES
+  
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : MP_DEV2 unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #MP_DEV2
+  SHARED
+  PROPERTIES
+    Name                #MP_DEV2
+    Origin              #{01F9DE88-B5D2-41A1-AFB9-4B5423421C47}
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024778
+        NODETYPE 329
+        NAME #Calculator
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024777
+        NODETYPE 329
+        NAME #SalesTableTypeDelegate
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024776
+        NODETYPE 329
+        NAME #PrintMyName
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Jobs
+      PROPERTIES
+        Name                #Jobs
+        ProjectGroupType    #Jobs
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #PurchOrderCreateFromFile
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #ImportProducts
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Create_Product
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #InsertProductAXD365
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #InsertVendor
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #InsertCustomer
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #UpdateVetSpeciesTable
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #InsertIntoVetSpeciesTable
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #HowManyDeliveriesWereMadeIn2012
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #HowManySalesWithMoreThan1Invoice
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #HowManySalesWithMoreThan1Delivery
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #NumberOfSoldItemsPerStatus
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MostSoldOutItemByQuantity
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Top5CustomersWithMostSales
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #CustomerWithMostSales
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #ListOfVendors
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #ExampleQuery
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #SetToleranceGrp2
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #CustomerAcctNumsAndNames
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #PlayingWithTables
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #executeCalculator
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #executePrintMyName
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #ControlStatements
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #DialogBox
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #InfologTree
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #YesNoBox
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MultiplicationTable
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #PrintJob
+      ENDNODE
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END

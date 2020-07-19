@@ -1,0 +1,659 @@
+﻿Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Microsoft Dynamics AX Class: Class2 unloaded
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #Class2
+    PROPERTIES
+      Name                #Class2
+      Origin              #{34DE0BA0-4270-47E0-A503-7E1B98864081}
+    ENDPROPERTIES
+    
+    METHODS
+      SOURCE #classDeclaration
+        #public class Class2
+        #{
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: FRM
+
+; Microsoft Dynamics AX Forms unloaded
+; --------------------------------------------------------------------------------
+FRMVERSION 12
+
+FORM #MP_FirstForm
+  PROPERTIES
+    Name                #MP_FirstForm
+    Origin              #{99C2C175-C27B-4DD5-9302-AEBF527F655E}
+  ENDPROPERTIES
+  
+  METHODS
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    SysFormSplitter_X verticalSplitter;
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    PROPERTIES
+    ENDPROPERTIES
+    
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #VendTable
+          Table               #VendTable
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        SOURCE #init
+          #public void init()
+          #{
+          #    super();
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  REFERENCEDATASOURCES
+  ENDREFERENCEDATASOURCES
+  
+  JOINS
+  ENDJOINS
+  
+  PARTREFERENCES
+  ENDPARTREFERENCES
+  
+  DESIGN
+    PROPERTIES
+      Style               #SimpleList
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL ACTIONPANE
+        PROPERTIES
+          Name                #ActionPane
+          ElementPosition     #429496729
+          Style               #Strip
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ACTIONPANETAB
+        PROPERTIES
+          Name                #ActionPaneTab
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPane
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        PROPERTIES
+          Name                #RecordBasics
+          ElementPosition     #1431655764
+          HierarchyParent     #ActionPaneTab
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          Width               #Column width
+          Height              #Column height
+          ElementPosition     #1431655764
+          HierarchyParent     #GridContainer
+          MultiSelect         #No
+          ShowRowLabels       #No
+          DataSource          #VendTable
+          AlternateRowShading #No
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #CustomFilterGroup
+          Visible             #No
+          ElementPosition     #1288490187
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #Edit
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #GridContainer
+          ElementPosition     #1717986916
+          Style               #BorderlessGridContainer
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL GROUP
+        PROPERTIES
+          Name                #PageTitleGroup
+          Visible             #No
+          ElementPosition     #858993458
+          Style               #DetailTitleContainer
+          AlignChild          #No
+          ViewEditMode        #View
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL ANIMATE
+        PROPERTIES
+          Name                #Animate
+          ElementPosition     #214748364
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL BUTTON
+        PROPERTIES
+          Name                #Button
+          ElementPosition     #715827880
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #7853
+          ImageLocation       #EmbeddedResource
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #clicked
+            #void clicked()
+            #{
+            #    super();
+            #    info("Hello");
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #DeleteButton
+          ElementPosition     #1610612733
+          HierarchyParent     #RecordBasics
+          Text                #@SYS14425
+          ButtonDisplay       #Text & Image left
+          NormalImage         #10121
+          ImageLocation       #EmbeddedResource
+          SaveRecord          #No
+          Primary             #Yes
+          Command             #2832
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL COMMANDBUTTON
+        PROPERTIES
+          Name                #NewButton
+          ElementPosition     #1073741822
+          HierarchyParent     #RecordBasics
+          ButtonDisplay       #Text & Image left
+          NormalImage         #11045
+          ImageLocation       #EmbeddedResource
+          Primary             #Yes
+          Command             #260
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #StringEdit
+          ElementPosition     #858993458
+          HierarchyParent     #Grid
+          DataSource          #VendTable
+          DataMethod          #name
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #VendTable_AccountNum
+          ElementPosition     #1288490187
+          HierarchyParent     #Grid
+          DataSource          #VendTable
+          DataField           #AccountNum
+        ENDPROPERTIES
+        
+        METHODS
+          SOURCE #modified
+            #public boolean modified()
+            #{
+            #    boolean ret;
+            #
+            #    ret = super();
+            #
+            #    return ret;
+            #}
+          ENDSOURCE
+        ENDMETHODS
+      ENDCONTROL 
+      
+      CONTROL STRINGEDIT
+        PROPERTIES
+          Name                #VendTable_Currency
+          ElementPosition     #1717986916
+          HierarchyParent     #Grid
+          DataSource          #VendTable
+          DataField           #Currency
+        ENDPROPERTIES
+        
+        METHODS
+        ENDMETHODS
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+  PERMISSIONS #Permissions
+    PROPERTIES
+    ENDPROPERTIES
+    
+    PERMISSIONSET #Read
+      PROPERTIES
+      ENDPROPERTIES
+      
+      FORM #Controls
+      ENDFORM
+      
+    TABLES #Tables
+    ENDTABLES
+    
+  SERVERMETHODS #Server Methods
+  ENDSERVERMETHODS
+  
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Update
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Create
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+PERMISSIONSET #Delete
+  PROPERTIES
+  ENDPROPERTIES
+  
+  FORM #Controls
+  ENDFORM
+  
+TABLES #Tables
+ENDTABLES
+
+SERVERMETHODS #Server Methods
+ENDSERVERMETHODS
+
+ASSOCIATEDFORMS #Associated Forms
+ENDASSOCIATEDFORMS
+
+ENDPERMISSIONSET
+
+ENDPERMISSIONS
+
+ENDFORM
+
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MP_testswitch unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MP_testswitch
+    #static void MP_testswitch(Args _args)
+    #{
+    #
+    #    anytype carGroup;
+    #    switch (carGroup)
+    #    {
+    #        case CarGroup::Economy :
+    #            info("Kia Picanto");
+    #            break;
+    #
+    #        case CarGroup::Compact :
+    #            info("Toyota Auris");
+    #            break;
+    #
+    #        case CarGroup::MidSize :
+    #            info("Toyota Rav4");
+    #            break;
+    #
+    #        case CarGroup::Luxury :
+    #            info("BMW 520");
+    #            break;
+    #
+    #        default
+    #            info("Standard cars");
+    #            break;
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{B1ACA002-7F06-41EA-B8DD-0024E570EFC2}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: Datatypes_integer2 unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Datatypes_integer2
+    #static void Datatypes_integer2(Args _args)
+    #{
+    #    int x = 24;
+    #    int y = 4;
+    #    int res = x/y;
+    #    str name;
+    #    int a;
+    #    name = "Carz Inc";
+    #    a = 100;
+    #    info(strFmt("%1: Welcome to %2", a, name));
+    #    info(strFmt("%1 / %2 = %3", x, y, x/y));
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{6653BDD6-04F2-433A-9050-606BCD629E2E}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MP_insert unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MP_insert
+    #static void MP_insert(Args _args)
+    #{
+    #CustTable custTable;
+    #;
+    #ttsBegin;
+    #
+    #select forupdate custTable;
+    #custTable.clear();
+    #custTable.AccountNum = 'MP_10009';
+    #//custTable.Currency = "USD";
+    #//custTable.insert();
+    #
+    #ttsCommit;
+    #
+    #
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{E2858E7D-1CCA-440B-8757-E8D6C37A3A9E}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MP_select unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MP_select
+    #static void MP_select(Args _args)
+    #{
+    #    VendTable vendTable;
+    #    DirPartyTable dirPartyTable;
+    #    while select AccountNum,Party from vendTable
+    #        join dirPartyTable
+    #        where vendTable.Party == dirPartyTable.RecId
+    #    {
+    #        info(strFmt("Account: %1, Name: %2",vendTable.AccountNum,dirPartyTable.Name));
+    #    }
+    #}
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{82E4C3D0-2268-4B1B-8CE4-C41295AC74E7}
+  ENDPROPERTIES
+  
+
+***Element: JOB
+
+; Microsoft Dynamics AX Job: MP_testjob unloaded
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #MP_testjob
+    #static void MP_testjob(Args _args)
+    #{
+    #    str Catalina;
+    #    int a,b,operatie;
+    #    a = 7;
+    #    b = 101;
+    #    operatie = a+b;
+    #    info(strFmt("%1 %2","Suma este",operatie));
+    #    Catalina = "un text anume";
+    #    info(strFmt("%1 %2","Acesta este", Catalina));
+    #    error("ceva");
+    #
+    #}
+    #
+  ENDSOURCE
+  PROPERTIES
+    Origin              #{5A180897-7F42-423B-A8FD-2A504CD2F1C6}
+  ENDPROPERTIES
+  
+
+***Element: FTM
+
+; Microsoft Dynamics AX MENUITEM : MP_FisrtMenuItem unloaded
+; --------------------------------------------------------------------------------
+  VERSION 1
+  
+  MENUITEM #MP_FisrtMenuItem
+    Type: 1
+    PROPERTIES
+      Name                #MP_FisrtMenuItem
+      Label               #@LCE157
+      Object              #MP_FirstForm
+      Origin              #{71737026-DA76-4842-AECB-24C84B86C48B}
+    ENDPROPERTIES
+    
+  ENDMENUITEM
+  
+
+***Element: PRN
+
+; Microsoft Dynamics AX Project : MP_firstproject unloaded
+; --------------------------------------------------------------------------------
+  PROJECTVERSION 2
+  
+  PROJECT #MP_firstproject
+  SHARED
+  PROPERTIES
+    Name                #MP_firstproject
+    Origin              #{DF61F9AA-965B-4668-9DC9-F5C31EFE20ED}
+  ENDPROPERTIES
+  
+    PROJECTCLASS ProjectNode
+    GROUP #Classes
+      PROPERTIES
+        Name                #Classes
+        ProjectGroupType    #Classes
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 45
+        UTILOBJECTID 1024768
+        NODETYPE 329
+        NAME #Class2
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Forms
+      PROPERTIES
+        Name                #Forms
+        ProjectGroupType    #Forms
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 11
+        UTILOBJECTID 0
+        NODETYPE 201
+        NAME #MP_FirstForm
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Jobs
+      PROPERTIES
+        Name                #Jobs
+        ProjectGroupType    #Jobs
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MP_testswitch
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #Datatypes_integer2
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MP_insert
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MP_select
+      ENDNODE
+      BEGINNODE
+        FILETYPE 0
+        UTILTYPE 5
+        UTILOBJECTID 0
+        NODETYPE 215
+        NAME #MP_testjob
+      ENDNODE
+      ENDGROUP
+      
+    GROUP #Menu Items
+      PROPERTIES
+        Name                #Menu Items
+        ProjectGroupType    #MenuItems
+        GroupMask           #
+        PreventEditProperties #No
+      ENDPROPERTIES
+      
+      GROUP #Display
+        PROPERTIES
+          Name                #Display
+          ProjectGroupType    #Display
+          GroupMask           #
+          PreventEditProperties #No
+        ENDPROPERTIES
+        
+        BEGINNODE
+          FILETYPE 0
+          UTILTYPE 1
+          UTILOBJECTID 0
+          NODETYPE 296
+          NAME #MP_FisrtMenuItem
+        ENDNODE
+        ENDGROUP
+        
+      ENDGROUP
+      
+  ENDPROJECT
+  
+
+***Element: END
